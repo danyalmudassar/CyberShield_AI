@@ -184,11 +184,11 @@ class Finding:
             if sev_cap in ("Critical", "High", "Medium", "Low", "Info"):
                 self.severity = sev_cap
 
-        # Invariant 1: Vulnerable severities (Critical/High/Medium/Low) cannot be labeled SUCCESS
-        if self.severity in ("Critical", "High", "Medium", "Low") and self.check_status == "SUCCESS":
+        # Invariant 1: Non-Info severities (Critical/High/Medium/Low) MUST reflect a confirmed vulnerability
+        if self.severity in ("Critical", "High", "Medium", "Low") and self.check_status != "VULNERABLE":
             self.check_status = "VULNERABLE"
 
-        # Invariant 2: Info severity findings cannot be labeled VULNERABLE
+        # Invariant 2: Info severity findings cannot be labeled VULNERABLE — but UNREACHABLE/ERROR remain untouched
         if self.severity == "Info" and self.check_status == "VULNERABLE":
             self.check_status = "SUCCESS"
 

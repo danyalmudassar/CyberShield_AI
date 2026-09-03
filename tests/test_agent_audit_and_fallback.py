@@ -185,6 +185,13 @@ class TestAgentAuditAndFallback(unittest.TestCase):
         f3 = Finding(finding_id="F-3", severity="Info", check_status="UNREACHABLE")
         self.assertEqual(f3.check_status, "UNREACHABLE")
 
+        # Case 4: High severity with UNREACHABLE/ERROR check_status auto-corrects to VULNERABLE
+        f4 = Finding(finding_id="F-4", severity="High", check_status="UNREACHABLE")
+        self.assertEqual(f4.check_status, "VULNERABLE")
+
+        f5 = Finding(finding_id="F-5", severity="Critical", check_status="ERROR")
+        self.assertEqual(f5.check_status, "VULNERABLE")
+
 
 if __name__ == "__main__":
     unittest.main()
