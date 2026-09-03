@@ -1,0 +1,17 @@
+{
+  "domain": "testphp.vulnweb.com",
+  "virustotal_score": 2,
+  "virustotal_positives": 2,
+  "virustotal_url_scan": {"positives": 2, "total": 90, "scan_date": "2026-08-29"},
+  "shodan_ports": [80, 443],
+  "shodan_vulns": ["CVE-2019-11043"],
+  "cve_matches": [
+    {"cve_id": "CVE-2019-11043", "severity": "Critical", "cvss": 9.8, "description": "PHP-FPM remote code execution"},
+    {"cve_id": "CVE-2016-5385", "severity": "High", "cvss": 8.1, "description": "PHP HTTP_PROXY header vulnerability"}
+  ],
+  "pakistan_threat_indicators": ["PHP applications frequently targeted by script kiddies in Pakistan region"],
+  "blacklist_status": "clean",
+  "breach_data": null,
+  "threat_score": 72,
+  "status": "success"
+}

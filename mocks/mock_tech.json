@@ -1,0 +1,12 @@
+{
+  "domain": "testphp.vulnweb.com",
+  "server": "nginx/1.19.0",
+  "cms": "Custom PHP Application",
+  "programming_language": "PHP 5.6.40",
+  "cdn": null,
+  "robots_txt": "User-agent: *\nDisallow: /admin/",
+  "sitemap_found": false,
+  "meta_generator": null,
+  "technologies": ["nginx", "PHP", "MySQL"],
+  "status": "success"
+}

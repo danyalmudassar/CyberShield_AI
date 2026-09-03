@@ -1,0 +1,18 @@
+{
+  "domain": "testphp.vulnweb.com",
+  "headers_present": {
+    "Content-Security-Policy": {"present": false, "value": null},
+    "X-Frame-Options": {"present": false, "value": null},
+    "Strict-Transport-Security": {"present": false, "value": null},
+    "X-Content-Type-Options": {"present": false, "value": null},
+    "Referrer-Policy": {"present": false, "value": null},
+    "Permissions-Policy": {"present": false, "value": null}
+  },
+  "hsts_present": false,
+  "https_redirect": false,
+  "header_score": 0,
+  "overall_risk": "HIGH",
+  "x_powered_by": "PHP/5.6.40",
+  "server_header": "nginx/1.19.0",
+  "status": "success"
+}

@@ -1,0 +1,14 @@
+{
+  "domain": "testphp.vulnweb.com",
+  "valid": false,
+  "expiry_date": null,
+  "days_remaining": null,
+  "issuer": null,
+  "is_self_signed": false,
+  "tls_versions": [],
+  "cipher_suite": null,
+  "cipher_strength": null,
+  "sans": [],
+  "status": "warning",
+  "error": "No SSL certificate found - site uses HTTP only"
+}

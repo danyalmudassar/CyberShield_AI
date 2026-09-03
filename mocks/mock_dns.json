@@ -1,0 +1,16 @@
+{
+  "domain": "testphp.vulnweb.com",
+  "a_records": ["44.228.249.3"],
+  "mx_records": [],
+  "ns_records": ["ns1.vulnweb.com", "ns2.vulnweb.com"],
+  "txt_records": [],
+  "spf_record": null,
+  "dmarc_record": null,
+  "dkim_found": false,
+  "whois_registrar": "GoDaddy.com LLC",
+  "whois_creation_date": "2012-06-14",
+  "whois_expiry_date": "2027-06-14",
+  "domain_expiry_days": 290,
+  "registrar_locked": true,
+  "status": "success"
+}

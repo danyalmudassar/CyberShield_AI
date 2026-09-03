@@ -1,0 +1,17 @@
+{
+  "domain": "testphp.vulnweb.com",
+  "screenshot_path": null,
+  "admin_panel_detected": true,
+  "https_padlock": false,
+  "captcha_present": false,
+  "third_party_scripts": [],
+  "suspicious_elements": ["Login form without HTTPS", "No CAPTCHA on login"],
+  "sensitive_info_exposed": ["PHP version in footer"],
+  "cookie_consent": false,
+  "mixed_content": false,
+  "visual_findings": [
+    {"finding": "No HTTPS padlock visible", "severity": "High"},
+    {"finding": "Login form detected without CAPTCHA", "severity": "Medium"}
+  ],
+  "status": "success"
+}
