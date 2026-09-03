@@ -537,16 +537,21 @@ def _load_mock() -> dict:
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
-def run_visual_scan(domain: str, use_mock: bool = False) -> dict:
+def run_visual_scan(domain: str, use_mock: bool = False, strict_live: bool = False) -> dict:
     """Run visual security analysis against the target domain.
 
     Args:
         domain: Target domain (e.g. "testphp.vulnweb.com").
         use_mock: If True, return canned mock results.
+        strict_live: If True, raise RuntimeError on mock usage or execution errors.
 
     Returns:
         Dict with visual_result (VisualResult), findings (list[Finding]), status, data_sources.
     """
+    strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
+    if use_mock and strict:
+        raise RuntimeError("STRICT_LIVE_MODE: Mock visual scan execution is disabled in strict live mode.")
+
     base = _base_url(domain)
 
     # ── MOCK MODE ────────────────────────────────────────────────────────────
