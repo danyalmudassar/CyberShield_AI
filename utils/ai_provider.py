@@ -116,7 +116,7 @@ def call_llm(
     prompt: str,
     system_prompt: Optional[str] = None,
     use_mock: bool = False,
-    timeout: int = 10,
+    timeout: int = 5,
     strict_live: bool = False,
 ) -> str:
     """Execute text generation against configured LLM provider or Gemini API."""
@@ -235,7 +235,7 @@ def call_llm_json(
     prompt: str,
     system_prompt: Optional[str] = None,
     use_mock: bool = False,
-    timeout: int = 10,
+    timeout: int = 5,
     strict_live: bool = False,
 ) -> Dict[str, Any]:
     """Execute JSON generation against the configured LLM provider."""
