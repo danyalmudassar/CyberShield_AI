@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import ThreatResult, Finding
 from utils.ai_provider import call_llm_json
+from utils.anonymizer import sanitize_text
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ def _load_mock_threat_data() -> Dict[str, Any]:
             with open(MOCK_THREAT_PATH, "r") as f:
                 return json.load(f)
     except Exception as err:
-        logger.error("Failed to load mock threat response: %s", err)
+        logger.error("Failed to load mock threat response: %s", sanitize_text(str(err)))
     return {
         "status": "mock",
         "cve_matches": [
@@ -55,6 +56,8 @@ def _load_mock_threat_data() -> Dict[str, Any]:
         "shodan": {"open_ports": [80, 443]},
         "virustotal": {"malicious_votes": 0}
     }
+
+
 def _query_virustotal_online(domain: str, strict_live: bool = False) -> Dict[str, Any]:
     """Query VirusTotal v3 API for domain reputation."""
     strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
@@ -79,9 +82,10 @@ def _query_virustotal_online(domain: str, strict_live: bool = False) -> Dict[str
         elif strict:
             raise RuntimeError(f"STRICT_LIVE_MODE: VirusTotal API returned HTTP {resp.status_code}")
     except Exception as err:
+        clean_err = sanitize_text(str(err))
         if strict:
-            raise RuntimeError(f"STRICT_LIVE_MODE: VirusTotal API request failed: {err}")
-        logger.warning("VirusTotal API query failed for %s: %s", domain, err)
+            raise RuntimeError(f"STRICT_LIVE_MODE: VirusTotal API request failed: {clean_err}")
+        logger.warning("VirusTotal API query failed for %s: %s", domain, clean_err)
     return {}
 
 
@@ -109,9 +113,10 @@ def _query_shodan_online(domain: str, strict_live: bool = False) -> Dict[str, An
         elif strict:
             raise RuntimeError(f"STRICT_LIVE_MODE: Shodan API returned HTTP {resp.status_code}")
     except Exception as err:
+        clean_err = sanitize_text(str(err))
         if strict:
-            raise RuntimeError(f"STRICT_LIVE_MODE: Shodan API request failed: {err}")
-        logger.warning("Shodan API query failed for %s: %s", domain, err)
+            raise RuntimeError(f"STRICT_LIVE_MODE: Shodan API request failed: {clean_err}")
+        logger.warning("Shodan API query failed for %s: %s", domain, clean_err)
     return {}
 
 
@@ -152,9 +157,10 @@ def _query_nvd_online(tech_versions: List[str], strict_live: bool = False) -> Li
             elif strict:
                 raise RuntimeError(f"STRICT_LIVE_MODE: NVD API returned HTTP {resp.status_code} for {tech}")
         except Exception as err:
+            clean_err = sanitize_text(str(err))
             if strict:
-                raise RuntimeError(f"STRICT_LIVE_MODE: NVD API lookup failed for {tech}: {err}")
-            logger.warning("NVD API lookup failed for %s: %s", tech, err)
+                raise RuntimeError(f"STRICT_LIVE_MODE: NVD API lookup failed for {tech}: {clean_err}")
+            logger.warning("NVD API lookup failed for %s: %s", tech, clean_err)
     return cves
 
 
@@ -282,16 +288,23 @@ def run_threat_intel(
 
     vt_key = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
     shodan_key = os.getenv("SHODAN_API_KEY", "").strip()
+    active_model = os.getenv("LLM_MODEL", os.getenv("QWEN_MODEL", "gemma4:31b-cloud"))
 
     data_sources = {
         "nvd": "mock" if use_mock else ("online" if any(c.get("_provenance") == "EXTERNAL_API" for c in cves) else "ai"),
         "virustotal": "mock" if use_mock or not vt_key else ("live" if vt_data else "mock"),
         "shodan": "mock" if use_mock or not shodan_key else ("live" if shodan_data else "mock"),
-        "ai": "gemma4:31b-cloud"
+        "ai": active_model
     }
 
-    fallback_triggered = use_mock or any(
-        isinstance(c, dict) and c.get("_provenance") == "MOCK_FALLBACK" for c in cves
+    vt_failed = bool(not use_mock and vt_key and not vt_data)
+    shodan_failed = bool(not use_mock and shodan_key and not shodan_data)
+
+    fallback_triggered = (
+        use_mock
+        or any(isinstance(c, dict) and c.get("_provenance") == "MOCK_FALLBACK" for c in cves)
+        or vt_failed
+        or shodan_failed
     )
 
     return {

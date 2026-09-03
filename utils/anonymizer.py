@@ -23,7 +23,7 @@ IPV4_REGEX = re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:
 
 IPV6_REGEX = re.compile(r'\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b|\b(?:[0-9a-fA-F]{1,4}:){1,7}:|\b::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}\b')
 EMAIL_REGEX = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-BEARER_KEY_REGEX = re.compile(r'(Bearer\s+|api_key=|token=)[A-Za-z0-9._-]+', re.IGNORECASE)
+BEARER_KEY_REGEX = re.compile(r'(Bearer\s+|api_key=|key=|token=)[A-Za-z0-9._-]+', re.IGNORECASE)
 
 
 def sanitize_text(text: str) -> str:

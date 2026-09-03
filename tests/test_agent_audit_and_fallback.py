@@ -228,6 +228,17 @@ class TestAgentAuditAndFallback(unittest.TestCase):
                 _query_shodan_online("example.com", strict_live=True)
             self.assertIn("SHODAN_API_KEY is not configured", str(ctx_sh.exception))
 
+    def test_threat_intel_fallback_triggered_on_virustotal_or_shodan_failure(self):
+        """Threat Intel agent MUST set fallback_triggered=True if VT or Shodan fail even when CVE lookup succeeds."""
+        from agents.threat_intel_agent import run_threat_intel
+        mock_cves = [{"cve_id": "CVE-2021-1234", "_provenance": "EXTERNAL_API"}]
+        with patch.dict(os.environ, {"VIRUSTOTAL_API_KEY": "fake_vt_key", "SHODAN_API_KEY": "fake_shodan_key"}):
+            with patch("agents.threat_intel_agent._query_nvd_online", return_value=mock_cves):
+                with patch("agents.threat_intel_agent._query_virustotal_online", return_value={}):
+                    with patch("agents.threat_intel_agent._query_shodan_online", return_value={"open_ports": [80]}):
+                        res = run_threat_intel("example.com", recon_data={"tech": {"detected_technologies": ["Apache"]}}, use_mock=False)
+                        self.assertTrue(res.get("fallback_triggered"))
+
 
 if __name__ == "__main__":
     unittest.main()
