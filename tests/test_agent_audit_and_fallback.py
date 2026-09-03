@@ -26,6 +26,18 @@ from agents.report_agent import generate_report, _build_executive_summary, _gene
 
 class TestAgentAuditAndFallback(unittest.TestCase):
 
+    def test_anonymizer_narrow_key_regex(self):
+        """Sanitizer MUST redact URL query keys & API keys without redacting non-sensitive terms like primary_key=id."""
+        from utils.anonymizer import sanitize_text
+        sensitive_url = "https://api.shodan.io/shodan/host/1.1.1.1?key=secret123key"
+        sanitized_url = sanitize_text(sensitive_url)
+        self.assertNotIn("secret123key", sanitized_url)
+        self.assertIn("[REDACTED_CREDENTIAL]", sanitized_url)
+
+        safe_text = "Database primary_key=id and header X-Frame-Options present"
+        sanitized_safe = sanitize_text(safe_text)
+        self.assertEqual(sanitized_safe, safe_text)
+
     # ── 1. PROVENANCE TESTS ──────────────────────────────────────────────────
     def test_threat_intel_provenance_mock(self):
         """Threat intel in mock mode MUST assign MOCK_FALLBACK provenance."""
