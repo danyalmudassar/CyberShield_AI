@@ -55,6 +55,50 @@ def _load_mock_threat_data() -> Dict[str, Any]:
         "shodan": {"open_ports": [80, 443]},
         "virustotal": {"malicious_votes": 0}
     }
+def _query_virustotal_online(domain: str) -> Dict[str, Any]:
+    """Query VirusTotal v3 API for domain reputation."""
+    api_key = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+    if not api_key:
+        return {}
+    url = f"https://www.virustotal.com/api/v3/domains/{domain}"
+    headers = {"x-apikey": api_key}
+    try:
+        resp = requests.get(url, headers=headers, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json().get("data", {}).get("attributes", {})
+            stats = data.get("last_analysis_stats", {})
+            return {
+                "malicious_votes": stats.get("malicious", 0),
+                "suspicious_votes": stats.get("suspicious", 0),
+                "harmless_votes": stats.get("harmless", 0),
+                "_provenance": "EXTERNAL_API",
+            }
+    except Exception as err:
+        logger.warning("VirusTotal API query failed for %s: %s", domain, err)
+    return {}
+
+
+def _query_shodan_online(domain: str) -> Dict[str, Any]:
+    """Query Shodan Host API for open ports and banners."""
+    api_key = os.getenv("SHODAN_API_KEY", "").strip()
+    if not api_key:
+        return {}
+    try:
+        import socket
+        ip = socket.gethostbyname(domain)
+        url = f"https://api.shodan.io/shodan/host/{ip}?key={api_key}"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            return {
+                "open_ports": data.get("ports", []),
+                "hostnames": data.get("hostnames", []),
+                "tags": data.get("tags", []),
+                "_provenance": "EXTERNAL_API",
+            }
+    except Exception as err:
+        logger.warning("Shodan API query failed for %s: %s", domain, err)
+    return {}
 
 
 def _query_nvd_online(tech_versions: List[str]) -> List[Dict[str, Any]]:
@@ -95,9 +139,12 @@ def _query_nvd_online(tech_versions: List[str]) -> List[Dict[str, Any]]:
     return cves
 
 
-def _query_nvd_ai(tech_versions: List[str], use_mock: bool = False) -> List[Dict[str, Any]]:
+def _query_nvd_ai(tech_versions: List[str], use_mock: bool = False, strict_live: bool = False) -> List[Dict[str, Any]]:
     """Query AI (gemma4:31b-cloud) for CVE intelligence if NVD API yields no results."""
+    strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
     if not tech_versions or use_mock:
+        if strict and use_mock:
+            raise RuntimeError("STRICT_LIVE_MODE: Mock threat intelligence fallback is disabled.")
         mock_cves = _load_mock_threat_data().get("cve_matches", [])
         for m in mock_cves:
             if isinstance(m, dict):
@@ -112,7 +159,7 @@ def _query_nvd_ai(tech_versions: List[str], use_mock: bool = False) -> List[Dict
     )
     system_prompt = "You are a CVE database specialist. Return structured CVE entries in JSON format."
     
-    res = call_llm_json(prompt, system_prompt=system_prompt, use_mock=use_mock, timeout=25)
+    res = call_llm_json(prompt, system_prompt=system_prompt, use_mock=use_mock, timeout=10, strict_live=strict)
     prov = res.get("_provenance", "MOCK_FALLBACK" if use_mock else "LLM_REASONING") if isinstance(res, dict) else ("MOCK_FALLBACK" if use_mock else "LLM_REASONING")
     
     matches = []
@@ -121,6 +168,8 @@ def _query_nvd_ai(tech_versions: List[str], use_mock: bool = False) -> List[Dict
     elif isinstance(res, dict) and "cve_matches" in res:
         matches = res["cve_matches"]
     else:
+        if strict:
+            raise RuntimeError("STRICT_LIVE_MODE: Failed to obtain CVE intelligence from LLM API.")
         matches = _load_mock_threat_data().get("cve_matches", [])
 
     for m in matches:
@@ -161,11 +210,11 @@ def _generate_cve_findings(cve_list: List[Dict[str, Any]]) -> List[Finding]:
     return findings
 
 
-
 def run_threat_intel(
     domain: str,
     recon_data: Optional[Dict[str, Any]] = None,
-    use_mock: bool = False
+    use_mock: bool = False,
+    strict_live: bool = False,
 ) -> Dict[str, Any]:
     """Execute complete threat intelligence phase.
 
@@ -173,11 +222,13 @@ def run_threat_intel(
         domain: Target domain or IP.
         recon_data: Optional data from recon stage containing tech stack.
         use_mock: If True, use built-in mock threat response.
+        strict_live: If True, raise RuntimeError on API failure instead of silent fallback.
 
     Returns:
         dict with keys: threat_result, findings, data_sources.
     """
-    logger.info("[threat_intel_agent] Gathering threat intel for %s (use_mock=%s)", domain, use_mock)
+    logger.info("[threat_intel_agent] Gathering threat intel for %s (use_mock=%s, strict_live=%s)", domain, use_mock, strict_live)
+    strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
 
     # 1. Extract Tech Stack
     tech_versions = []
@@ -192,21 +243,28 @@ def run_threat_intel(
         cves = _query_nvd_online(tech_versions)
     
     if not cves:
-        cves = _query_nvd_ai(tech_versions, use_mock=use_mock)
+        cves = _query_nvd_ai(tech_versions, use_mock=use_mock, strict_live=strict)
 
-    # 3. Create Finding Objects
+    # 3. Fetch VirusTotal & Shodan live intelligence if keys available
+    vt_data = _query_virustotal_online(domain) if not use_mock else {}
+    shodan_data = _query_shodan_online(domain) if not use_mock else {}
+
+    # 4. Create Finding Objects
     findings = _generate_cve_findings(cves)
 
-    # 4. Construct ThreatResult
+    # 5. Construct ThreatResult
     threat_res = ThreatResult(
         cve_matches=cves,
         status="success"
     )
 
+    vt_key = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
+    shodan_key = os.getenv("SHODAN_API_KEY", "").strip()
+
     data_sources = {
-        "nvd": "mock" if use_mock else "online/ai",
-        "virustotal": "mock" if use_mock or not VIRUSTOTAL_API_KEY else "live",
-        "shodan": "mock" if use_mock or not SHODAN_API_KEY else "live",
+        "nvd": "mock" if use_mock else ("online" if any(c.get("_provenance") == "EXTERNAL_API" for c in cves) else "ai"),
+        "virustotal": "mock" if use_mock or not vt_key else ("live" if vt_data else "mock"),
+        "shodan": "mock" if use_mock or not shodan_key else ("live" if shodan_data else "mock"),
         "ai": "gemma4:31b-cloud"
     }
 
@@ -217,6 +275,8 @@ def run_threat_intel(
     return {
         "domain": domain,
         "threat_result": threat_res,
+        "virustotal": vt_data,
+        "shodan": shodan_data,
         "findings": findings,
         "data_sources": data_sources,
         "fallback_triggered": fallback_triggered,

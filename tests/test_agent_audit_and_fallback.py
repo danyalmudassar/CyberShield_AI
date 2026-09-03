@@ -192,6 +192,30 @@ class TestAgentAuditAndFallback(unittest.TestCase):
         f5 = Finding(finding_id="F-5", severity="Critical", check_status="ERROR")
         self.assertEqual(f5.check_status, "VULNERABLE")
 
+    # ── 8. THREAT INTEL AGENT STRICT LIVE & LIVE API TESTS ────────────────
+    def test_threat_intel_strict_live_raises_on_failure(self):
+        """Threat Intel agent in strict live mode MUST raise RuntimeError if LLM/mock fallback occurs."""
+        from agents.threat_intel_agent import run_threat_intel
+        with patch.dict(os.environ, {"STRICT_LIVE_MODE": "true"}):
+            with patch("agents.threat_intel_agent._query_nvd_online", return_value=[]):
+                with patch("agents.threat_intel_agent.call_llm_json", side_effect=RuntimeError("STRICT_LIVE_MODE: Failed")):
+                    with self.assertRaises(RuntimeError) as ctx:
+                        run_threat_intel("example.com", recon_data={"tech": {"detected_technologies": ["Apache 2.4"]}}, use_mock=False)
+                    self.assertIn("STRICT_LIVE_MODE", str(ctx.exception))
+
+    def test_threat_intel_live_virustotal_shodan_provenance(self):
+        """VirusTotal and Shodan live queries MUST return EXTERNAL_API provenance when API keys present."""
+        from agents.threat_intel_agent import _query_virustotal_online, _query_shodan_online
+        mock_vt_resp = MagicMock()
+        mock_vt_resp.status_code = 200
+        mock_vt_resp.json.return_value = {"data": {"attributes": {"last_analysis_stats": {"malicious": 0, "harmless": 70}}}}
+
+        with patch.dict(os.environ, {"VIRUSTOTAL_API_KEY": "fake_vt_key"}):
+            with patch("requests.get", return_value=mock_vt_resp):
+                res_vt = _query_virustotal_online("example.com")
+                self.assertEqual(res_vt.get("_provenance"), "EXTERNAL_API")
+                self.assertEqual(res_vt.get("harmless_votes"), 70)
+
 
 if __name__ == "__main__":
     unittest.main()
