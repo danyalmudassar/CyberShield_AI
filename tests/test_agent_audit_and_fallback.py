@@ -216,6 +216,18 @@ class TestAgentAuditAndFallback(unittest.TestCase):
                 self.assertEqual(res_vt.get("_provenance"), "EXTERNAL_API")
                 self.assertEqual(res_vt.get("harmless_votes"), 70)
 
+    def test_virustotal_and_shodan_strict_live_raises_on_missing_keys(self):
+        """VirusTotal and Shodan functions MUST raise RuntimeError in strict live mode if API keys are unconfigured or fail."""
+        from agents.threat_intel_agent import _query_virustotal_online, _query_shodan_online
+        with patch.dict(os.environ, {"STRICT_LIVE_MODE": "true", "VIRUSTOTAL_API_KEY": "", "SHODAN_API_KEY": ""}):
+            with self.assertRaises(RuntimeError) as ctx_vt:
+                _query_virustotal_online("example.com", strict_live=True)
+            self.assertIn("VIRUSTOTAL_API_KEY is not configured", str(ctx_vt.exception))
+
+            with self.assertRaises(RuntimeError) as ctx_sh:
+                _query_shodan_online("example.com", strict_live=True)
+            self.assertIn("SHODAN_API_KEY is not configured", str(ctx_sh.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

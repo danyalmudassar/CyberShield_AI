@@ -55,10 +55,13 @@ def _load_mock_threat_data() -> Dict[str, Any]:
         "shodan": {"open_ports": [80, 443]},
         "virustotal": {"malicious_votes": 0}
     }
-def _query_virustotal_online(domain: str) -> Dict[str, Any]:
+def _query_virustotal_online(domain: str, strict_live: bool = False) -> Dict[str, Any]:
     """Query VirusTotal v3 API for domain reputation."""
+    strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
     api_key = os.getenv("VIRUSTOTAL_API_KEY", "").strip()
     if not api_key:
+        if strict:
+            raise RuntimeError("STRICT_LIVE_MODE: VIRUSTOTAL_API_KEY is not configured in environment.")
         return {}
     url = f"https://www.virustotal.com/api/v3/domains/{domain}"
     headers = {"x-apikey": api_key}
@@ -73,15 +76,22 @@ def _query_virustotal_online(domain: str) -> Dict[str, Any]:
                 "harmless_votes": stats.get("harmless", 0),
                 "_provenance": "EXTERNAL_API",
             }
+        elif strict:
+            raise RuntimeError(f"STRICT_LIVE_MODE: VirusTotal API returned HTTP {resp.status_code}")
     except Exception as err:
+        if strict:
+            raise RuntimeError(f"STRICT_LIVE_MODE: VirusTotal API request failed: {err}")
         logger.warning("VirusTotal API query failed for %s: %s", domain, err)
     return {}
 
 
-def _query_shodan_online(domain: str) -> Dict[str, Any]:
+def _query_shodan_online(domain: str, strict_live: bool = False) -> Dict[str, Any]:
     """Query Shodan Host API for open ports and banners."""
+    strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
     api_key = os.getenv("SHODAN_API_KEY", "").strip()
     if not api_key:
+        if strict:
+            raise RuntimeError("STRICT_LIVE_MODE: SHODAN_API_KEY is not configured in environment.")
         return {}
     try:
         import socket
@@ -96,13 +106,18 @@ def _query_shodan_online(domain: str) -> Dict[str, Any]:
                 "tags": data.get("tags", []),
                 "_provenance": "EXTERNAL_API",
             }
+        elif strict:
+            raise RuntimeError(f"STRICT_LIVE_MODE: Shodan API returned HTTP {resp.status_code}")
     except Exception as err:
+        if strict:
+            raise RuntimeError(f"STRICT_LIVE_MODE: Shodan API request failed: {err}")
         logger.warning("Shodan API query failed for %s: %s", domain, err)
     return {}
 
 
-def _query_nvd_online(tech_versions: List[str]) -> List[Dict[str, Any]]:
+def _query_nvd_online(tech_versions: List[str], strict_live: bool = False) -> List[Dict[str, Any]]:
     """Query NIST NVD API v2 for software versions."""
+    strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
     cves = []
     headers = {"User-Agent": "CyberShield-AI/1.0"}
     for tech in tech_versions[:3]:  # Limit to top 3 for speed
@@ -134,7 +149,11 @@ def _query_nvd_online(tech_versions: List[str]) -> List[Dict[str, Any]]:
                         "affected_software": tech,
                         "_provenance": "EXTERNAL_API",
                     })
+            elif strict:
+                raise RuntimeError(f"STRICT_LIVE_MODE: NVD API returned HTTP {resp.status_code} for {tech}")
         except Exception as err:
+            if strict:
+                raise RuntimeError(f"STRICT_LIVE_MODE: NVD API lookup failed for {tech}: {err}")
             logger.warning("NVD API lookup failed for %s: %s", tech, err)
     return cves
 
@@ -230,6 +249,9 @@ def run_threat_intel(
     logger.info("[threat_intel_agent] Gathering threat intel for %s (use_mock=%s, strict_live=%s)", domain, use_mock, strict_live)
     strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
 
+    if use_mock and strict:
+        raise RuntimeError("STRICT_LIVE_MODE: Mock mode execution is disabled in strict live mode.")
+
     # 1. Extract Tech Stack
     tech_versions = []
     if recon_data and isinstance(recon_data, dict):
@@ -240,14 +262,14 @@ def run_threat_intel(
     # 2. Fetch CVEs (Online NVD API first, then AI gemma4:31b-cloud)
     cves = []
     if not use_mock and tech_versions:
-        cves = _query_nvd_online(tech_versions)
+        cves = _query_nvd_online(tech_versions, strict_live=strict)
     
     if not cves:
         cves = _query_nvd_ai(tech_versions, use_mock=use_mock, strict_live=strict)
 
     # 3. Fetch VirusTotal & Shodan live intelligence if keys available
-    vt_data = _query_virustotal_online(domain) if not use_mock else {}
-    shodan_data = _query_shodan_online(domain) if not use_mock else {}
+    vt_data = _query_virustotal_online(domain, strict_live=strict) if not use_mock else {}
+    shodan_data = _query_shodan_online(domain, strict_live=strict) if not use_mock else {}
 
     # 4. Create Finding Objects
     findings = _generate_cve_findings(cves)
