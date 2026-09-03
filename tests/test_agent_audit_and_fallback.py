@@ -170,6 +170,21 @@ class TestAgentAuditAndFallback(unittest.TestCase):
                     call_llm_json("Analyze security", use_mock=False)
                 self.assertIn("STRICT_LIVE_MODE", str(ctx.exception))
 
+    # ── 7. FINDING POST_INIT INVARIANT TESTS ─────────────────────────────
+    def test_finding_post_init_invariant_auto_sync(self):
+        """Finding __post_init__ MUST enforce severity <-> check_status invariant alignment."""
+        # Case 1: High severity with default SUCCESS check_status auto-corrects to VULNERABLE
+        f1 = Finding(finding_id="F-1", severity="High", check_status="SUCCESS")
+        self.assertEqual(f1.check_status, "VULNERABLE")
+
+        # Case 2: Info severity clean pass with VULNERABLE check_status auto-corrects to SUCCESS
+        f2 = Finding(finding_id="F-2", severity="Info", check_status="VULNERABLE")
+        self.assertEqual(f2.check_status, "SUCCESS")
+
+        # Case 3: UNREACHABLE and ERROR carry over cleanly on Info severity
+        f3 = Finding(finding_id="F-3", severity="Info", check_status="UNREACHABLE")
+        self.assertEqual(f3.check_status, "UNREACHABLE")
+
 
 if __name__ == "__main__":
     unittest.main()

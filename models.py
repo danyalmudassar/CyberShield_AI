@@ -177,6 +177,21 @@ class Finding:
     check_status: str = "SUCCESS"              # SUCCESS | VULNERABLE | INCOMPLETE | UNREACHABLE | ERROR
     references: list[str] = field(default_factory=list)
 
+    def __post_init__(self):
+        """Maintain strict structural invariants between severity and check_status."""
+        if self.severity:
+            sev_cap = self.severity.strip().capitalize()
+            if sev_cap in ("Critical", "High", "Medium", "Low", "Info"):
+                self.severity = sev_cap
+
+        # Invariant 1: Vulnerable severities (Critical/High/Medium/Low) cannot be labeled SUCCESS
+        if self.severity in ("Critical", "High", "Medium", "Low") and self.check_status == "SUCCESS":
+            self.check_status = "VULNERABLE"
+
+        # Invariant 2: Info severity findings cannot be labeled VULNERABLE
+        if self.severity == "Info" and self.check_status == "VULNERABLE":
+            self.check_status = "SUCCESS"
+
 
 
 @dataclass
