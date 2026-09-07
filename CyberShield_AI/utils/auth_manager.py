@@ -10,6 +10,7 @@ import hmac
 import os
 from pathlib import Path
 import secrets
+import re
 import sqlite3
 import threading
 import time
@@ -125,6 +126,33 @@ def initialize_auth():
                 ON CONFLICT(id) DO UPDATE SET password_hash=excluded.password_hash, enabled=1''',
                          (user_id, email, role, _hash_password(password)))
         _configured[key] = fingerprint
+
+
+def register_user(email, password):
+    """Create an operator account; reserved bootstrap identities cannot be claimed."""
+    if os.getenv('CYBERSHIELD_ALLOW_SIGNUP', 'true').lower() not in ('true', '1'):
+        raise HTTPException(403, 'Registration is disabled. Contact the workspace administrator.')
+    email = email.strip().lower()
+    local, separator, domain = email.partition('@')
+    if (not separator or len(email) > 254 or len(local) > 64
+            or not re.fullmatch(r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+", local)
+            or local.startswith('.') or local.endswith('.') or '..' in local
+            or not re.fullmatch(r'(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}', domain)):
+        raise HTTPException(422, 'Enter a valid email address.')
+    if not 12 <= len(password) <= 256:
+        raise HTTPException(422, 'Use a password containing 12 to 256 characters.')
+    if email in ('admin@cybershield.ai', 'operator@cybershield.ai'):
+        raise HTTPException(409, 'This email is unavailable. Sign in or use another email.')
+    initialize_auth()
+    user_id = 'usr_' + secrets.token_hex(16)
+    encoded = _hash_password(password)
+    try:
+        with _database() as (conn, _):
+            conn.execute('INSERT INTO users (id,email,role,password_hash,enabled) VALUES (?,?,?,?,1)',
+                         (user_id, email, 'operator', encoded))
+    except sqlite3.IntegrityError:
+        raise HTTPException(409, 'This email is unavailable. Sign in or use another email.') from None
+    return UserIdentity(user_id, email, 'operator', time.time())
 
 
 def authenticate_user(email, password):

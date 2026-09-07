@@ -1,0 +1,78 @@
+# HTTPS single-server deployment. Run separately from compose.yaml.
+services:
+  backend:
+    build: ./CyberShield_AI
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 2
+    stop_grace_period: 20s
+    environment:
+      CYBERSHIELD_OPERATOR_PASSWORD_FILE: /run/secrets/operator_password
+      CYBERSHIELD_COOKIE_SECURE: 'true'
+      CYBERSHIELD_REQUIRE_AUTH: 'true'
+      CYBERSHIELD_ALLOW_SIGNUP: '${CYBERSHIELD_ALLOW_SIGNUP:-true}'
+      CYBERSHIELD_ORIGINS: 'https://${CYBERSHIELD_DOMAIN:?Configure the HTTPS domain}'
+      CYBERSHIELD_MAX_CONCURRENT_SCANS: '1'
+      CYBERSHIELD_MAX_PENDING_SCANS: '20'
+      CYBERSHIELD_DEMO_ONLY: 'true'
+    secrets: [operator_password]
+    volumes:
+      - scan_data:/app/data
+      - scan_reports:/app/reports
+    tmpfs: ['/tmp:size=64m,mode=1777']
+    networks: [scanner]
+    logging:
+      driver: json-file
+      options: {max-size: '10m', max-file: '3'}
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    pids_limit: 64
+    mem_limit: 512m
+    cpus: 1
+    depends_on:
+      backend: {condition: service_healthy}
+    tmpfs: ['/tmp:size=64m,mode=1777']
+    networks: [scanner, web]
+    logging:
+      driver: json-file
+      options: {max-size: '10m', max-file: '3'}
+  gateway:
+    build: ./deploy/cloud
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    pids_limit: 64
+    mem_limit: 192m
+    cpus: 0.5
+    depends_on:
+      frontend: {condition: service_healthy}
+    environment:
+      CYBERSHIELD_DOMAIN: '${CYBERSHIELD_DOMAIN:?Configure the HTTPS domain}'
+    ports: ['80:8080', '443:8443']
+    volumes: [tls_data:/data, tls_config:/config]
+    tmpfs: ['/tmp:size=32m,mode=1777']
+    networks: [web, internet]
+    logging:
+      driver: json-file
+      options: {max-size: '10m', max-file: '3'}
+secrets:
+  operator_password:
+    file: '${CYBERSHIELD_OPERATOR_PASSWORD_FILE:?Configure the operator password file}'
+volumes:
+  scan_data:
+  scan_reports:
+  tls_data:
+  tls_config:
+networks:
+  scanner: {internal: true}
+  web: {internal: true}
+  internet:

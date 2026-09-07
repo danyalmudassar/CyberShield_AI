@@ -101,7 +101,7 @@ class ScanRequest(BaseModel):
 
 
 from utils.auth_manager import (
-    authenticate_user,
+    authenticate_user, register_user,
     create_token,
     revoke_token,
     get_current_user,
@@ -116,6 +116,12 @@ class LoginRequest(BaseModel):
     email: str = Field(min_length=3, max_length=254)
     password: str = Field(min_length=1, max_length=256)
     delivery: Literal["cookie", "bearer"] = "cookie"
+
+
+class RegisterRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=12, max_length=256)
 
 
 def operator(request: Request):
@@ -270,6 +276,10 @@ def login(req: LoginRequest, request: Request, response: Response):
     user = authenticate_user(req.email, req.password)
     if not user:
         raise HTTPException(401, "Invalid email or password")
+    return _issue_session(user, request, response, req.delivery)
+
+
+def _issue_session(user, request, response, delivery="cookie"):
     # Rotate an existing browser session on reauthentication/account switch.
     previous = request.cookies.get(COOKIE_NAME)
     if previous:
@@ -277,13 +287,22 @@ def login(req: LoginRequest, request: Request, response: Response):
     token = create_token(user.user_id, user.email, user.role)
     result = {"user_id": user.user_id, "email": user.email, "role": user.role}
     response.headers["Cache-Control"] = "no-store"
-    if req.delivery == "bearer":
+    if delivery == "bearer":
         result["token"] = token
     else:
         response.set_cookie(COOKIE_NAME, token, max_age=SESSION_SECONDS,
                             httponly=True, samesite="strict", path="/api",
                             secure=os.getenv("CYBERSHIELD_COOKIE_SECURE", "true").lower() != "false")
     return result
+
+
+@app.post("/api/v1/auth/register", status_code=201)
+@app.post("/api/auth/register", status_code=201)
+def register(req: RegisterRequest, request: Request, response: Response):
+    enforce_request_origin(request, browser_login=True)
+    check_login_limit(req.email, request.client.host if request.client else "unknown")
+    user = register_user(req.email, req.password)
+    return _issue_session(user, request, response)
 
 
 @app.post("/api/v1/auth/logout")

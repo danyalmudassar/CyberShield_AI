@@ -1,0 +1,16 @@
+name: Feature request
+description: Propose an improvement to the assessment workflow.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired user experience
+    validations:
+      required: true

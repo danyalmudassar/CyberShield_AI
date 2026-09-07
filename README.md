@@ -1,5 +1,10 @@
 # CyberShield AI
 
+[![Backend verification](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/backend.yml/badge.svg?branch=master)](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/backend.yml)
+[![Frontend verification](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/frontend.yml/badge.svg?branch=master)](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/frontend.yml)
+
+[Quick start](#start-the-local-demo) · [Documentation](docs/README.md) · [Alibaba deployment](docs/alibaba-deployment.md) · [Contributing](CONTRIBUTING.md)
+
 Local web-security assessment dashboard with deterministic probes, optional AI analysis, a project-defined technical control matrix, and PDF reports.
 
 ## Workspace preview
@@ -35,6 +40,28 @@ Alternate ports:
 ## Container demo
 
 A separate Docker Compose path builds the backend and Next.js standalone dashboard, with persistent data/report volumes and a loopback dashboard on port 3300. Configure a password secret file first; follow the [container release instructions](docs/container-release.md). This packaging runs fixture-only demos.
+
+## Repository layout
+
+```text
+CyberShield_AI/     Backend API, agents, persistence and tests
+frontend/          Next.js login, signup and assessment workspace
+deploy/cloud/      HTTPS gateway and server configuration helper
+docs/              Setup, verification and deployment guides
+.github/           CI workflows and contribution templates
+```
+
+## Accounts
+
+Use **Create an account** on `/login` to register a new operator account, or sign in
+with the account configured by the launcher. Passwords are hashed; sessions and scan
+ownership are enforced by the backend. See [authentication](docs/authentication.md).
+
+## Alibaba Cloud
+
+The [ECS deployment guide](docs/alibaba-deployment.md) covers the complete application
+behind HTTPS with persistent scan/report volumes. Actual cloud deployment requires
+your ECS instance, DNS and access configuration; no public deployment is implied.
 
 ## Implemented workflow
 

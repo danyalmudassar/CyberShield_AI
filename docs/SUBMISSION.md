@@ -26,7 +26,7 @@ The [container guide](container-release.md) provides the verified Docker alterna
 
 ## Three-minute walkthrough
 
-1. Open the dedicated login page, sign in, then show the workspace and authorization checkbox.
+1. Open `/login`; sign in or use **Create an account** to register an operator, then show the workspace.
 2. Keep **Demo** selected, confirm authorization and select **Start demo assessment**.
 3. Show assessment activity and evidence/status distinctions, then open **Reports**.
 4. Select **Download PDF**; return to **Overview** and reopen the scan from **Recent assessments**.

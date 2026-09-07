@@ -1,0 +1,26 @@
+name: Bug report
+description: Report a reproducible problem without sensitive data.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Do not include passwords, API keys, private reports or sensitive vulnerability details.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Prefer a fixture demo or an authorized local lab.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit, operating system and browser
+    validations:
+      required: true

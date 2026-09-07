@@ -8,7 +8,7 @@
 - Saved assessment count and selected assessment status use actual API data. No fabricated live counters. Demo findings are excluded from the confirmed finding count.
 - Demo is the default form mode. Rules-only and live remain explicit choices; backend deployment policy still controls which scans are accepted.
 - Stage outcome cards preserve completed, failed, partial, skipped and fixture distinctions. Expandable activity log.
-- Searchable/filterable existing findings and control evidence remain available. Recent assessments reopen persisted scan results.
+- Filterable existing findings and control evidence remain available. Recent assessments reopen persisted scan results.
 - Document-style executive summary and authenticated PDF download. Historical benchmark records are collapsed and clearly labeled as historical.
 - External font dependency removed; system typography works offline.
 
@@ -22,4 +22,10 @@ Preview used `http://127.0.0.1:3100` with a separate temporary database; it does
 
 ## Scope
 
-This redesign does not add registration, password reset delivery, cloud hosting or a new identity provider. Access remains controlled by configured operator/admin credentials. This is a verified local demo release, not a claim of complete production security or full automated compliance certification.
+The final release also adds `/signup` with persistent operator accounts. Email verification and password reset delivery remain unconfigured; cloud packaging does not itself provision a server. This is a verified local demo release, not a claim of complete production security or full automated compliance certification.
+
+Final signup browser verification passed: password confirmation, operator-only role,
+admin endpoint denial, reload, logout and subsequent login. Signup layouts were
+checked at 320, 768 and 1440 pixels. Backend verification: 366 passed, one
+integration test deselected, two dependency deprecation warnings. Cloud setup
+helper: four unit tests passed. Production frontend/container build passed.

@@ -1,0 +1,9 @@
+# Optional: use with compose.cloud.yaml only for authorized target assessments.
+# This permits backend egress and live/rules-only API requests.
+services:
+  backend:
+    environment:
+      CYBERSHIELD_DEMO_ONLY: 'false'
+    networks: [scanner, scanner_outbound]
+networks:
+  scanner_outbound:

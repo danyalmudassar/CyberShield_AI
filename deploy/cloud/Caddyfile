@@ -1,0 +1,27 @@
+{
+    admin off
+    http_port 8080
+    https_port 8443
+}
+
+{$CYBERSHIELD_DOMAIN} {
+    encode zstd gzip
+    header {
+        -Server
+        -X-Powered-By
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        Strict-Transport-Security "max-age=31536000"
+    }
+    request_body {
+        max_size 1MB
+    }
+    reverse_proxy frontend:3000 {
+        flush_interval -1
+    }
+}
+
+http://127.0.0.1:8081 {
+    respond "ready" 200
+}

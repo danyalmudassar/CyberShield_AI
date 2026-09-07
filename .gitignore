@@ -14,3 +14,7 @@ dist/
 build/
 
 .release-secrets/
+
+# Private cloud deployment configuration
+.cloud.env
+deploy/cloud/runtime/

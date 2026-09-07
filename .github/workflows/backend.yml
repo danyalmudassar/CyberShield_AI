@@ -32,6 +32,8 @@ jobs:
           python -m pip install --require-hashes --only-binary=:all: -r requirements.txt
       - name: Check installed dependency consistency
         run: python -m pip check
+      - name: Verify private cloud configuration helper
+        run: python -m unittest discover -s ../deploy/cloud -p 'test_*.py' -v
       - name: Run offline tests
         run: python -m pytest -m 'not live and not integration'
 
@@ -44,3 +46,7 @@ jobs:
         run: docker build --tag cybershield-backend:ci .
       - name: Verify non-root runtime imports without network
         run: docker run --rm --network none --entrypoint python cybershield-backend:ci -c "import os, server; assert os.getuid() != 0"
+      - name: Build HTTPS gateway
+        run: docker build --tag cybershield-gateway:ci ../deploy/cloud
+      - name: Validate capability-free HTTPS gateway configuration
+        run: docker run --rm --network none --cap-drop ALL -e CYBERSHIELD_DOMAIN=security.example.com cybershield-gateway:ci caddy validate --config /etc/caddy/Caddyfile
