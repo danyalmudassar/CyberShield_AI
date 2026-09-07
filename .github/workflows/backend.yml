@@ -36,6 +36,9 @@ jobs:
         run: python -m unittest discover -s ../deploy/cloud -p 'test_*.py' -v
       - name: Run offline tests
         run: python -m pytest -m 'not live and not integration'
+      - name: Verify production monitor failure handling
+        working-directory: .
+        run: python -m unittest discover -s deploy/monitor -p 'test_*.py' -v
 
   container-build:
     runs-on: ubuntu-latest
