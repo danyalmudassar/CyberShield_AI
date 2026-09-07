@@ -144,6 +144,7 @@ def _run_full_scan(
     max_duration_seconds: float = 300,
     max_stage_seconds: float = 120,
     scope_target: str | None = None,
+    target_url: str | None = None,
 ) -> ScanState:
     """Run the complete CyberShield AI security assessment pipeline."""
     import time
@@ -174,6 +175,11 @@ def _run_full_scan(
         is_mock_scan = False
         is_rules_only = False
         use_ai = True
+
+    # A bare-host scope permits the existing HTTPS/HTTP fallback.
+    probe_target = scope_target or target_url or domain
+    if target_url and (not scope_target or "://" in scope_target):
+        probe_target = target_url
 
     state = ScanState(
         domain=domain,
@@ -384,7 +390,7 @@ def _run_full_scan(
     _update("recon", "Running reconnaissance...")
     recon_result = None
     try:
-        recon_result = _run_stage_with_timeout(run_recon, domain, use_mock=is_mock_scan, strict_live=strict, use_ai=use_ai)
+        recon_result = _run_stage_with_timeout(run_recon, probe_target, use_mock=is_mock_scan, strict_live=strict, use_ai=use_ai)
         _reject_live_mock(recon_result)
         state.recon = recon_result.get("dns") if isinstance(recon_result, dict) else None
         state.ssl = recon_result.get("ssl") if isinstance(recon_result, dict) else None
@@ -404,7 +410,7 @@ def _run_full_scan(
     _update("threat_intel", "Gathering threat intelligence...")
     threat_result = None
     try:
-        threat_result = _run_stage_with_timeout(run_threat_intel, domain, recon_data=recon_result, use_mock=is_mock_scan, strict_live=strict, use_ai=use_ai)
+        threat_result = _run_stage_with_timeout(run_threat_intel, probe_target, recon_data=recon_result, use_mock=is_mock_scan, strict_live=strict, use_ai=use_ai)
         _reject_live_mock(threat_result)
         state.threats = threat_result.get("threat_result") if isinstance(threat_result, dict) else None
         if isinstance(threat_result, dict):
@@ -421,7 +427,7 @@ def _run_full_scan(
     _update("visual", "Running visual security analysis (V-001 to V-008)...")
     visual_result = None
     try:
-        visual_result = _run_stage_with_timeout(run_visual_scan, domain, use_mock=is_mock_scan, strict_live=strict)
+        visual_result = _run_stage_with_timeout(run_visual_scan, probe_target, use_mock=is_mock_scan, strict_live=strict)
         _reject_live_mock(visual_result)
         state.visual = visual_result.get("visual_result") if isinstance(visual_result, dict) else None
         if isinstance(visual_result, dict):
@@ -439,7 +445,7 @@ def _run_full_scan(
     if scope_type == "full_pentest" and authorized:
         _update("pentest", "Running active security checks...")
         try:
-            pentest_result = _run_stage_with_timeout(run_pentest, domain, authorized=True, use_mock=is_mock_scan, strict_live=strict)
+            pentest_result = _run_stage_with_timeout(run_pentest, probe_target, authorized=True, use_mock=is_mock_scan, strict_live=strict)
             _reject_live_mock(pentest_result)
             state.pentest_findings = pentest_result.get("findings", []) if isinstance(pentest_result, dict) else []
             state.all_findings.extend([f for f in state.pentest_findings if getattr(f, "severity", "") != "Info"])

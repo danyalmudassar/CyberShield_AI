@@ -178,3 +178,41 @@ def test_terminal_sse_event_is_not_duplicated(api):
     worker.run_once()
     stream = client.get(f"/api/scans/{job['id']}/events")
     assert stream.text.count('"type": "complete"') == 1
+
+@pytest.mark.parametrize('target', ['https://example.com', 'https://example.com:8443', 'http://example.com:8080'])
+def test_api_worker_pipeline_preserves_probe_origin(api, monkeypatch, target):
+    from agents import orchestrator, pentest_agent, recon_agent
+    from utils.target_policy import normalize_target, current_scope
+    from unittest.mock import Mock
+    client, store = api
+    monkeypatch.setenv('CYBERSHIELD_STAGE_ISOLATION', 'thread')
+    monkeypatch.setenv('CYBERSHIELD_DEMO_ONLY', 'false')
+    monkeypatch.setattr(server, 'validate_target', lambda value, **kw: normalize_target(value))
+    observed = []
+    dns_hosts = []
+    def probe(url, **kwargs):
+        observed.append(url)
+        assert normalize_target(url).origin in current_scope().origins
+        return Mock(status_code=200, text='ordinary page'), None
+    def active(domain, **kwargs):
+        finding = pentest_agent._check_directory_listing(domain)
+        return {'findings': [finding], 'status': 'success'}
+    monkeypatch.setattr(pentest_agent, '_probe_get', probe)
+    monkeypatch.setattr(orchestrator, 'run_pentest', active)
+    monkeypatch.setattr(orchestrator, 'run_threat_intel', lambda *a, **kw: {'findings': [], 'status': 'success'})
+    monkeypatch.setattr(orchestrator, 'run_visual_scan', lambda *a, **kw: {'findings': [], 'status': 'success'})
+    monkeypatch.setattr(recon_agent, 'check_target_reachability', lambda *a, **kw: (True, ''))
+    def dns(host, **kwargs):
+        dns_hosts.append(host)
+        return {'status': 'success'}
+    monkeypatch.setattr(recon_agent, 'run_dns_recon', dns)
+    for name in ('run_ssl_check', 'run_header_scan', 'run_tech_fingerprint'):
+        monkeypatch.setattr(recon_agent, name, lambda *a, **kw: {'status': 'success'})
+    # Final rendering is unrelated to target selection and need not write a PDF.
+    monkeypatch.setattr(orchestrator, 'generate_report', lambda *a, **kw: {})
+    response = client.post('/api/scans', json={'domain': target, 'authorized': True, 'execution_mode': 'rules_only', 'scope_type': 'full_pentest'})
+    assert response.status_code == 202
+    assert ScanWorker(store, server._serialize_state).run_once()
+    assert dns_hosts == ['example.com']
+    assert observed
+    assert all(normalize_target(url).origin == normalize_target(target).origin for url in observed)

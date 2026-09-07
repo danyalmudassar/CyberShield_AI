@@ -127,7 +127,6 @@ class ScanWorker:
         result, error, status = None, None, 'failed'
         try:
             config = dict(job['config'])
-            config.pop('target_url', None)
             state = self.runner(**config, progress_callback=progress, cancellation_check=cancelled, event_callback=lambda event: self.store.append_event(scan_id, event))
             result = self.serialize(state)
             result['scan_id'] = scan_id

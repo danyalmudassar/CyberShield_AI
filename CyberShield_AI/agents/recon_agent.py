@@ -251,8 +251,8 @@ def run_recon(
             }
 
     # 1. Execute Core Scanners
-    from urllib.parse import urlsplit
-    dns_host = urlsplit("//" + domain).hostname or domain
+    from utils.target_policy import normalize_target
+    dns_host = normalize_target(domain).host
     dns_res = run_dns_recon(dns_host, use_mock=use_mock, strict_live=strict)
     ssl_res = run_ssl_check(domain, use_mock=use_mock, strict_live=strict)
     hdr_res = run_header_scan(domain, use_mock=use_mock, strict_live=strict)
