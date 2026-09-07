@@ -43,7 +43,7 @@ def create_authenticated_session(
         username_field: HTML input field name for username
         password_field: HTML input field name for password
         csrf_field: Optional HTML input field name containing CSRF token (e.g. 'user_token')
-        success_indicator: Optional text snippet that MUST be present on successful login (or absent on failure)
+        success_indicator: Required for verification; must be absent before login and present after login
         extra_fields: Optional static form fields (e.g. {'Login': 'Login'})
         timeout: Timeout per HTTP request in seconds
         allow_private: Whether private lab IP ranges are permitted
@@ -81,7 +81,7 @@ def create_authenticated_session(
                 )
             if match:
                 csrf_value = match.group(1)
-                logger.debug(f"[auth_session] Extracted CSRF token '{csrf_value}' for field '{csrf_field}'")
+                logger.debug("[auth_session] Extracted configured CSRF field")
             else:
                 logger.warning(f"[auth_session] CSRF field '{csrf_field}' defined but token not found in HTML body")
 
@@ -103,10 +103,13 @@ def create_authenticated_session(
             logger.warning(f"[auth_session] Login POST failed with HTTP {post_resp.status_code}")
             return None
 
-        if success_indicator:
-            if success_indicator.lower() not in post_resp.text.lower():
-                logger.warning(f"[auth_session] Login verification failed: '{success_indicator}' missing in response")
-                return None
+        if not success_indicator or not success_indicator.strip():
+            logger.warning("[auth_session] Login cannot be verified without a success indicator")
+            return None
+        marker = success_indicator.casefold()
+        if marker in get_resp.text.casefold() or marker not in post_resp.text.casefold():
+            logger.warning("[auth_session] Login success indicator did not establish a state change")
+            return None
 
         logger.info(f"[auth_session] Successfully authenticated at {login_url} (Cookies: {list(session.cookies.keys())})")
         authenticated = True

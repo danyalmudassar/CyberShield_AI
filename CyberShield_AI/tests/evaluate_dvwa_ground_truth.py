@@ -73,6 +73,7 @@ def evaluate_dvwa():
         "username": "admin",
         "password": "password",
         "csrf_field": "user_token",
+        "success_indicator": "Logout",
         "extra_fields": {"Login": "Login"},
     }
     res = run_pentest(domain, authorized=True, auth_credentials=dvwa_auth)
