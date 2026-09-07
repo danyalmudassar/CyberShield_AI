@@ -192,7 +192,9 @@ def _assess_control_4(recon_data, threat_data) -> PisfControl:
         partials.append(f"Certificate expiring in {days} days")
     if hdr_ok:
         https_redir = _sg(hdr, "https_redirect", False)
-        if not https_redir:
+        if https_redir is None:
+            partials.append("HTTP to HTTPS redirect not assessed within target scope")
+        elif not https_redir:
             partials.append("HTTP to HTTPS redirect not configured")
     if fails:
         return PisfControl(
@@ -305,6 +307,13 @@ def _assess_control_7(recon_data, threat_data) -> PisfControl:
         )
     https_r = _sg(hdr, "https_redirect", False)
     hsts = _sg(hdr, "hsts_present", False)
+    if https_r is None:
+        return PisfControl(
+            control_id=c["id"], domain=c["domain"], status="NOT_ASSESSABLE",
+            evidence=f"HTTP redirect is outside the assessed origin; HSTS: {'Present' if hsts else 'Missing'}.",
+            recommendation="Assess HTTP redirection only with authorization for that origin.",
+            international_mapping=_intl(c),
+        )
     ev = [f"HTTPS redirect: {'Yes' if https_r else 'No'}", f"HSTS: {'Present' if hsts else 'Missing'}"]
     if not https_r and not hsts:
         return PisfControl(

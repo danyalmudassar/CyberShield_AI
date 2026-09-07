@@ -21,7 +21,7 @@ import re
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import TechResult
-from utils.http_client import get, get_headers, safe_request
+from utils.http_client import get, get_headers, safe_request, target_http_urls
 
 MOCK_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -75,23 +75,19 @@ def detect_cms(html: str, headers: dict) -> str:
 
 def check_robots_txt(domain: str) -> str:
     """R-022: Fetch robots.txt — return content or None."""
-    resp, _ = safe_request(f"https://{domain}/robots.txt", timeout=(3, 5))
-    if resp is not None and resp.status_code == 200:
-        return resp.text
-    resp, _ = safe_request(f"http://{domain}/robots.txt", timeout=(3, 5))
-    if resp is not None and resp.status_code == 200:
-        return resp.text
+    for url in target_http_urls(domain, "/robots.txt"):
+        resp, _ = safe_request(url, timeout=(3, 5))
+        if resp is not None and resp.status_code == 200:
+            return resp.text
     return None
 
 
 def check_sitemap(domain: str) -> bool:
     """R-023: Return True if sitemap.xml exists and contains XML."""
-    resp, _ = safe_request(f"https://{domain}/sitemap.xml", timeout=(3, 5))
-    if resp is not None and resp.status_code == 200 and "<" in resp.text[:500]:
-        return True
-    resp, _ = safe_request(f"http://{domain}/sitemap.xml", timeout=(3, 5))
-    if resp is not None and resp.status_code == 200 and "<" in resp.text[:500]:
-        return True
+    for url in target_http_urls(domain, "/sitemap.xml"):
+        resp, _ = safe_request(url, timeout=(3, 5))
+        if resp is not None and resp.status_code == 200 and "<" in resp.text[:500]:
+            return True
     return False
 
 
@@ -193,25 +189,21 @@ def run_tech_fingerprint(domain: str, use_mock: bool = False, strict_live: bool 
         return _load_mock()
 
     try:
-        # Fetch homepage — try https first (testphp.vulnweb.com has HTTPS)
         html = ""
         headers = {}
-        resp, err = safe_request(f"https://{domain}", timeout=(3, 5))
-        if resp is not None:
-            html = resp.text
-        else:
-            resp, err = safe_request(f"http://{domain}", timeout=(3, 5))
+        for url in target_http_urls(domain):
+            resp, err = safe_request(url, timeout=(3, 5))
             if resp is not None:
                 html = resp.text
-
-        # Grab headers separately
-        try:
-            headers = get_headers(f"https://{domain}", timeout=(3, 5))
-        except Exception:
+                break
+        if resp is None:
+            raise RuntimeError("Technology fingerprint could not be assessed: all requests failed")
+        for url in target_http_urls(domain):
             try:
-                headers = get_headers(f"http://{domain}", timeout=(3, 5))
+                headers = get_headers(url, timeout=(3, 5))
+                break
             except Exception:
-                headers = {}
+                continue
 
         # Run all detections
         server_str, lang_str = detect_server(headers)

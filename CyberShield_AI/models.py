@@ -80,7 +80,7 @@ class HeaderResult:
     headers_present: dict = field(default_factory=dict)   # header_name: {present, value}
     missing_headers: list[str] = field(default_factory=list)  # names of absent security headers
     hsts_present: bool = False                 # R-017
-    https_redirect: bool = False               # R-018
+    https_redirect: Optional[bool] = False               # R-018
     header_score: int = 0                      # R-019: 0-6
     overall_risk: str = "HIGH"                 # HIGH | MEDIUM | LOW
     x_powered_by: Optional[str] = None         # R-025
@@ -186,19 +186,11 @@ class Finding:
     references: list[str] = field(default_factory=list)
 
     def __post_init__(self):
-        """Maintain strict structural invariants between severity and check_status.
+        """Normalize legacy findings without promoting explicit non-confirmed evidence.
 
-        Invariants:
-        1. Probe-level failure/unreachability precedence:
-           If check_status is UNREACHABLE or ERROR, the probe failed or target was unreachable,
-           meaning NO vulnerability was confirmed. Severity MUST be forced to 'Info'.
-        2. Non-Info severity precedence:
-           If severity is Critical, High, Medium, or Low (and NOT UNREACHABLE/ERROR),
-           check_status MUST be forced to 'VULNERABLE' — UNLESS the caller has already
-           set UNVERIFIED_CANDIDATE or MOCK_FALLBACK, which must be preserved so that
-           LLM suggestions and fixture data are never presented as confirmed findings.
-        3. Info severity precedence:
-           If severity is 'Info' and check_status is 'VULNERABLE', check_status auto-corrects to 'SUCCESS'.
+        Legacy successful checks with non-Info severity imply a vulnerability.
+        Explicit statuses remain authoritative; severity alone cannot upgrade them.
+        Failed probes remain informational and mock/AI provenance stays unconfirmed.
         """
         if self.severity:
             sev_cap = self.severity.strip().capitalize()
@@ -216,9 +208,9 @@ class Finding:
         elif self.provenance == "LLM_REASONING":
             self.check_status = "UNVERIFIED_CANDIDATE"
 
-        # Invariant 3: Non-Info severities reflect confirmed vulnerabilities -> Force check_status to VULNERABLE
+        # Legacy SUCCESS findings infer confirmation from non-Info severity only.
         elif self.severity in ("Critical", "High", "Medium", "Low"):
-            if self.check_status not in ("UNVERIFIED_CANDIDATE", "MOCK_FALLBACK"):
+            if self.check_status == "SUCCESS":
                 self.check_status = "VULNERABLE"
 
         # Invariant 4: Info severity clean findings cannot be VULNERABLE -> Auto-correct to SUCCESS

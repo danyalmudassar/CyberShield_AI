@@ -199,9 +199,15 @@ def safe_request(url, timeout=_DEFAULT_TIMEOUT, allow_private=False):
         return None, str(exc)
 
 
+def target_http_urls(target, path=""):
+    """Preserve explicit origins; bare hosts retain HTTPS/HTTP fallback."""
+    bases = [target] if '://' in target else [f'https://{target}', f'http://{target}']
+    return [base.rstrip('/') + path for base in bases]
+
+
 def check_target_reachability(domain, timeout=3, allow_private=False):
     from utils.anonymizer import sanitize_secrets_only
-    candidates = [domain] if '://' in domain else [f'https://{domain}', f'http://{domain}']
+    candidates = target_http_urls(domain)
     last_error = 'Target failed to respond'
     for url in candidates:
         try:

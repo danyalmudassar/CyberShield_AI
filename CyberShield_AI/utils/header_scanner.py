@@ -22,7 +22,7 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import HeaderResult
-from utils.http_client import get, get_headers, safe_request
+from utils.http_client import get, get_headers, safe_request, target_http_urls
 
 SECURITY_HEADERS = [
     "Content-Security-Policy",
@@ -47,16 +47,14 @@ MOCK_PATH = os.path.join(
 def check_security_headers(domain: str) -> dict:
     """Fetch response headers and check each of the 6 security headers (R-019)."""
     headers = None
-    try:
-        headers = get_headers(f"https://{domain}", timeout=(3, 5))
-    except Exception:
-        pass
-
-    if headers is None:
+    for url in target_http_urls(domain):
         try:
-            headers = get_headers(f"http://{domain}", timeout=(3, 5))
+            headers = get_headers(url, timeout=(3, 5))
+            break
         except Exception:
-            headers = {}
+            continue
+    if headers is None:
+        raise RuntimeError("Security headers could not be assessed: all requests failed")
 
     result = {}
     for name in SECURITY_HEADERS:
@@ -79,9 +77,12 @@ def check_hsts(headers: dict) -> bool:
     return False
 
 
-def check_https_redirect(domain: str) -> bool:
+def check_https_redirect(domain: str) -> bool | None:
     """R-018: Check whether http:// redirects to https://."""
-    resp, err = safe_request(f"http://{domain}", timeout=(3, 5))
+    if "://" in domain and domain.startswith("https://"):
+        return None  # HTTP origin was not included in the explicit target.
+    url = domain if "://" in domain else f"http://{domain}"
+    resp, err = safe_request(url, timeout=(3, 5))
     if resp is not None:
         return resp.url.startswith("https://")
     return False
