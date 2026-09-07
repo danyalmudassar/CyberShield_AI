@@ -1,0 +1,35 @@
+name: Production health monitor
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-health-monitor
+  cancel-in-progress: false
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check readiness, login and anonymous access
+        env:
+          MONITOR_ORIGIN: https://cybershield-frontend-production-c850.up.railway.app
+        run: |
+          for attempt in 1 2 3; do
+            if python deploy/monitor/check_health.py "$MONITOR_ORIGIN"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then sleep 10; fi
+          done
+          echo '::error::Production health checks failed. See docs/railway-operations.md.'
+          exit 1

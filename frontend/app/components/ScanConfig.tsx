@@ -6,6 +6,8 @@ import { Globe2, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import type { ExecutionMode, ScanRequest } from "../../lib/api-types";
 
 const AVAILABLE_MODELS = [
+  { id: "", name: "Workspace default", tag: "Configured AI provider" },
+  { id: "qwen3.6-plus", name: "Qwen 3.6 Plus", tag: "Alibaba Cloud" },
   { id: "gemma4:31b-cloud", name: "Gemma4 31B", tag: "Ollama Cloud" },
   { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", tag: "Google AI" },
   { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", tag: "Google AI" },
@@ -41,7 +43,7 @@ export default function ScanConfig({
   const [email] = useState("");
   const [mode, setMode] = useState<ExecutionMode>("demo");
   const [strictLive, setStrictLive] = useState(false);
-  const [aiModel, setAiModel] = useState("gemma4:31b-cloud");
+  const [aiModel, setAiModel] = useState("");
 
   const handleSubmit = (e: React.FormEvent, mock: boolean) => {
     e.preventDefault();
@@ -59,7 +61,7 @@ export default function ScanConfig({
       contact_email: email,
       execution_mode: executionMode,
       strict_live: executionMode === "live" && strictLive,
-      ai_model: aiModel,
+      ai_model: executionMode === "live" && aiModel ? aiModel : undefined,
     });
   };
 
@@ -116,7 +118,7 @@ export default function ScanConfig({
                   onChange={() => {
                     setMode(item.id as ExecutionMode);
                     if (item.id === "live" && aiModel === "offline-rules")
-                      setAiModel("gemma4:31b-cloud");
+                      setAiModel("");
                   }}
                 />
                 <strong>{item.name}</strong>

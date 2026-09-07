@@ -7,7 +7,7 @@ export interface ScanRequest {
   contact_email: string;
   execution_mode: ExecutionMode;
   strict_live: boolean;
-  ai_model: string;
+  ai_model?: string;
   max_duration_seconds?: number;
   max_stage_seconds?: number;
 }
