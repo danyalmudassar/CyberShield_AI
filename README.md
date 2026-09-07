@@ -2,7 +2,7 @@
 >
 > **Project ID:** P01869 | **Applicant:** Danyal Mudassar
 >
-> Originally listed as Kinetix AI Coach. A title/domain change request to CyberShield AI was submitted on 4 September 2026 under the ticket subject "Project Title & Domain Change Request to CyberShield AI - P01869". This reference records the request; approval is not asserted.
+> Originally listed as Kinetix AI Coach. A title/domain change request to CyberShield AI was submitted on 4 September 2026 under the ticket subject "Project Title & Domain Change Request to CyberShield AI - P01869".
 
 # CyberShield AI
 
