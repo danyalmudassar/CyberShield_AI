@@ -7,7 +7,7 @@ are managed here; the other services in the Railway project are unrelated.
 ## Automatic deployment
 
 Both services connect to danyalmudassar/CyberShield_AI, branch master, with root
-directories /CyberShield_AI and /frontend. Both use /api/ready and a 300-second
+directories /backend and /frontend. Both use /api/ready and a 300-second
 healthcheck timeout. Wait for CI is enabled on both GitHub triggers. Keep one
 backend replica for SQLite worker ownership.
 

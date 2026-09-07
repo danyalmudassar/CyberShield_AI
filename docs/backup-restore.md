@@ -33,7 +33,7 @@ are not included. Preserve the matching release and secret provisioning separate
 
 ## Local filesystem commands
 
-After stopping the application, from `CyberShield_AI/`:
+After stopping the application, from `backend/`:
 
 ```bash
 python -m services.backup create --offline \
@@ -136,7 +136,7 @@ schema migration in this release.
   downloads and logout; mount inspection confirmed restored subpaths replaced
   original volumes. No frontend source changed and no fresh browser UI claim is made.
 - Temporary drill scripts/logs are under `/tmp/cybershield-backup-*`; durable
-  automated coverage is in `CyberShield_AI/tests/test_backup.py`.
+  automated coverage is in `backend/tests/test_backup.py`.
 
 These checks cover local backup/recovery. They do not establish off-host disaster
 recovery, scheduled backup freshness, retention compliance or public deployment.

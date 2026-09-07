@@ -2,7 +2,7 @@
 
 ## Repository layout
 
-- `CyberShield_AI/`: FastAPI API, agents, transports, persistent jobs and Python tests.
+- `backend/`: FastAPI API, agents, transports, persistent jobs and Python tests.
 - `frontend/`: Next.js App Router UI, login/signup and assessment workspace.
 - `deploy/cloud/`: HTTPS gateway and private ECS configuration helper.
 - `docs/`: deployment, recovery, verification and submission guides.
@@ -22,7 +22,7 @@ never gain administrator privileges or access another user's scan/report.
 ## Before opening a pull request
 
 ```bash
-cd CyberShield_AI
+cd backend
 python -m pytest -q
 cd ../frontend
 npx tsc --noEmit

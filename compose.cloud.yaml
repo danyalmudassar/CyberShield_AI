@@ -1,7 +1,7 @@
 # HTTPS single-server deployment. Run separately from compose.yaml.
 services:
   backend:
-    build: ./CyberShield_AI
+    build: ./backend
     restart: unless-stopped
     init: true
     read_only: true

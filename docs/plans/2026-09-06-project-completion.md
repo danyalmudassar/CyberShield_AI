@@ -11,7 +11,7 @@ This scope is an explicit planning assumption. Public multi-tenant SaaS, billing
 
 ## Baseline and evidence
 
-- Two independent Git repositories: `CyberShield_AI/` and `frontend/`. The workspace root is not their shared Git repository. Track backend/frontend commit pairs for each release; decide deliberately if a later monorepo migration is useful.
+- Two independent Git repositories: `backend/` and `frontend/`. The workspace root is not their shared Git repository. Track backend/frontend commit pairs for each release; decide deliberately if a later monorepo migration is useful.
 - Existing uncommitted frontend change: `frontend/app/page.tsx`. Preserve and review it before implementation.
 - Verified during the project review: 45 offline tests passed (`test_offline_verifier.py` and `test_pisf_reachability.py`); frontend TypeScript check passed.
 - Full backend suite, production frontend build, browser flows, and live benchmarks have not been verified in this review.
@@ -37,17 +37,17 @@ Paths below are workspace-relative. New modules are proposed files.
 
 | Files | Responsibility |
 |---|---|
-| `CyberShield_AI/models.py` | Evidence, finding, assessment, and report domain models |
-| `CyberShield_AI/api/schemas.py`, `api/scans.py`, `api/reports.py`, `api/auth.py` | Typed API contracts, jobs, protected report access, operator identity |
-| `CyberShield_AI/services/scan_store.py`, `services/scan_worker.py` | Durable jobs/events and bounded execution |
-| `CyberShield_AI/utils/target_policy.py`, `utils/http_client.py` | Scope enforcement and shared request policy |
-| `CyberShield_AI/utils/ai_provider.py`, `utils/anonymizer.py` | Per-scan model routing and outgoing-data sanitization |
-| `CyberShield_AI/utils/auth_session.py`, `utils/crawler.py` | Authenticated access and endpoint discovery |
-| `CyberShield_AI/agents/*.py` | Existing pipeline stages, detection, scoring, reporting |
+| `backend/models.py` | Evidence, finding, assessment, and report domain models |
+| `backend/api/schemas.py`, `api/scans.py`, `api/reports.py`, `api/auth.py` | Typed API contracts, jobs, protected report access, operator identity |
+| `backend/services/scan_store.py`, `services/scan_worker.py` | Durable jobs/events and bounded execution |
+| `backend/utils/target_policy.py`, `utils/http_client.py` | Scope enforcement and shared request policy |
+| `backend/utils/ai_provider.py`, `utils/anonymizer.py` | Per-scan model routing and outgoing-data sanitization |
+| `backend/utils/auth_session.py`, `utils/crawler.py` | Authenticated access and endpoint discovery |
+| `backend/agents/*.py` | Existing pipeline stages, detection, scoring, reporting |
 | `frontend/lib/api-types.ts`, `lib/api-client.ts`, `app/hooks/useScan.ts` | Generated types, API access, reconnectable scan state |
 | `frontend/app/page.tsx`, `app/components/*.tsx` | Operator workflows and evidence rendering |
-| `CyberShield_AI/tests/`, `frontend/tests/` | Isolated regression tests, API and browser tests |
-| `CyberShield_AI/deploy/`, `frontend/Dockerfile` | Service images and deployment configuration |
+| `backend/tests/`, `frontend/tests/` | Isolated regression tests, API and browser tests |
+| `backend/deploy/`, `frontend/Dockerfile` | Service images and deployment configuration |
 | `docs/plans/`, backend/frontend README files | Cross-project plan, verified setup, release instructions |
 
 Each task below is an implementation slice. Split it further if it cannot be reviewed in one focused session. Add regression tests before changing incorrect behavior; run the listed verification; inspect the diff; checkpoint the relevant repository without including unrelated changes.

@@ -9,9 +9,9 @@
 [![Backend verification](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/backend.yml/badge.svg?branch=master)](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/backend.yml)
 [![Frontend verification](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/frontend.yml/badge.svg?branch=master)](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/frontend.yml)
 
-[Quick start](#start-the-local-demo) · [Documentation](docs/README.md) · [Alibaba deployment](docs/alibaba-deployment.md) · [Contributing](CONTRIBUTING.md)
+[Quick start](#start-the-local-demo) · [Documentation](docs/README.md) · [Railway operations](docs/railway-operations.md) · [Contributing](CONTRIBUTING.md)
 
-Local web-security assessment dashboard with deterministic probes, optional AI analysis, a project-defined technical control matrix, and PDF reports.
+Web-security assessment dashboard with deterministic probes, optional AI analysis, a project-defined technical control matrix, and PDF reports.
 
 ## Workspace preview
 
@@ -26,16 +26,16 @@ On Linux, from this directory use Python 3.12 and Node.js 20.9 or later:
 
 ```bash
 python -m venv .venv
-.venv/bin/python -m pip install --require-hashes --only-binary=:all: -r CyberShield_AI/requirements.txt
+.venv/bin/python -m pip install --require-hashes --only-binary=:all: -r backend/requirements.txt
 npm --prefix frontend ci
 .venv/bin/python run_local.py
 ```
 
 The launcher prompts privately for an operator password (12–256 characters) if no account password is configured. For noninteractive startup, supply `CYBERSHIELD_OPERATOR_PASSWORD` through your environment/secret manager. No default password is enabled.
 
-Open **http://127.0.0.1:3000**, sign in as `operator@cybershield.ai` with the configured password, confirm authorization, choose **Demo**, and launch. The default launcher configures fixture-only execution; no target probes or AI requests run in that mode. Scan records and events are stored in `CyberShield_AI/data/scans.sqlite3`; generated PDFs remain in `CyberShield_AI/reports/`.
+Open **http://127.0.0.1:3000**, sign in as `operator@cybershield.ai` with the configured password, confirm authorization, choose **Demo**, and launch. The default launcher configures fixture-only execution; no target probes or AI requests run in that mode. Scan records and events are stored in `backend/data/scans.sqlite3`; generated PDFs remain in `backend/reports/`.
 
-Press Ctrl+C to stop both services. For explicitly authorized real target testing, use `run_local.py --allow-live`. Target HTTP/TLS requests now enforce scope, validate redirect hops, and pin new connections to checked IPs; see [transport policy](CyberShield_AI/docs/target-scope-policy.md). Keep this release local. `rules_only` performs target/network intelligence checks but skips AI; it does not mean offline.
+Press Ctrl+C to stop both services. For explicitly authorized real target testing, use `run_local.py --allow-live`. Target HTTP/TLS requests now enforce scope, validate redirect hops, and pin new connections to checked IPs; see [transport policy](backend/docs/target-scope-policy.md). `rules_only` performs target/network intelligence checks but skips AI; it does not mean offline.
 
 Alternate ports:
 
@@ -50,11 +50,12 @@ A separate Docker Compose path builds the backend and Next.js standalone dashboa
 ## Repository layout
 
 ```text
-CyberShield_AI/     Backend API, agents, persistence and tests
-frontend/          Next.js login, signup and assessment workspace
-deploy/cloud/      HTTPS gateway and server configuration helper
-docs/              Setup, verification and deployment guides
-.github/           CI workflows and contribution templates
+backend/       FastAPI service, agents, persistence and Python tests
+frontend/      Next.js dashboard and backend proxy
+deploy/       Cloud configuration, HTTPS gateway and monitoring
+docs/         Setup, architecture, operations and verification
+.github/       Shared CI workflows and contribution templates
+run_local.py   Start both services for local development
 ```
 
 ## Accounts
@@ -63,11 +64,15 @@ Use **Create an account** on `/login` to register a new operator account, or sig
 with the account configured by the launcher. Passwords are hashed; sessions and scan
 ownership are enforced by the backend. See [authentication](docs/authentication.md).
 
-## Alibaba Cloud
+## Deployment
 
-The [ECS deployment guide](docs/alibaba-deployment.md) covers the complete application
-behind HTTPS with persistent scan/report volumes. Actual cloud deployment requires
-your ECS instance, DNS and access configuration; no public deployment is implied.
+The hosted application runs on Railway with service roots `/backend` and `/frontend`.
+See the [Railway operations guide](docs/railway-operations.md) for CI-gated deployments,
+readiness checks, scheduled backups and incident response. The repository name
+`CyberShield_AI` remains unchanged; `backend/` is the Python service directory.
+
+Docker Compose supports local demonstrations and a separate HTTPS server deployment.
+The [Alibaba ECS guide](docs/alibaba-deployment.md) remains available for that alternative.
 
 ## Implemented workflow
 
@@ -87,7 +92,7 @@ the original scan ID. API callers can set `max_duration_seconds` (default 300,
 maximum 900) and `max_stage_seconds` (default 120, maximum 300). Both are positive
 integer seconds. Completed jobs survive restart; interrupted executions are not
 automatically rerun, while queued jobs resume. See the
-[worker lifecycle policy](CyberShield_AI/docs/worker-lifecycle-policy.md) for
+[worker lifecycle policy](backend/docs/worker-lifecycle-policy.md) for
 exclusive database ownership, shutdown, platform scope and remaining limits.
 
 ## Backup and recovery
@@ -96,12 +101,12 @@ Offline backup/restore now covers scan data, accounts and PDFs with integrity ch
 
 ## Operational checks
 
-`/api/ready` checks worker/database readiness; `/api/operations` provides an admin-only queue and request-metric snapshot. Structured request/job events omit credential payloads. See the [operations runbook](CyberShield_AI/docs/operations.md) for interpretation and limits.
+`/api/ready` checks worker/database readiness; `/api/operations` provides an admin-only queue and request-metric snapshot. Structured request/job events omit credential payloads. See the [operations runbook](backend/docs/operations.md) for interpretation and limits.
 
 ## Verification
 
 ```bash
-cd CyberShield_AI
+cd backend
 python -m pytest -q
 ```
 
@@ -115,14 +120,13 @@ Unit tests block network sockets and DNS while allowing local UNIX socketpairs u
 
 ## Deployment boundary
 
-This is a local single-team release path, not a public multi-tenant service. Use **one API process per SQLite database**. Multiple API workers are not supported. The dashboard requires configured login credentials and uses HttpOnly, revocable sessions; protected APIs also require authentication over loopback. See [authentication/session policy](CyberShield_AI/docs/auth-session-policy.md) for configuration, CSRF, command-line access and remaining limitations. Deployment TLS, infrastructure egress controls, and production recovery remain release gates. Default stage processes support timeout/cancellation termination; the explicit thread test mode does not provide hard termination.
+The application uses a single-server SQLite deployment model. Use **one API process per SQLite database**. Multiple API workers are not supported. The dashboard requires configured login credentials and uses HttpOnly, revocable sessions; protected APIs also require authentication over loopback. See [authentication/session policy](backend/docs/auth-session-policy.md) for configuration, CSRF, command-line access and remaining limitations. Configure TLS, egress policy and recovery procedures for each deployment. Default stage processes support timeout/cancellation termination; the explicit thread test mode does not provide hard termination.
 
-The 12-group control matrix is project-defined technical guidance, not certification or a verified complete PISF crosswalk. Some groups require manual evidence. See [assessment policy](CyberShield_AI/docs/assessment-policy.md).
+The 12-group control matrix is project-defined technical guidance, not certification or a verified complete PISF crosswalk. Some groups require manual evidence. See [assessment policy](backend/docs/assessment-policy.md).
 
-## Project layout and remaining work
+## Project guides
 
-- `CyberShield_AI/`: Python backend, agents, evidence models, storage, tests.
-- `frontend/`: Next.js dashboard; separate Git repository from the backend.
+- [Repository structure](docs/repository-structure.md): directory ownership, local artifacts and common commands.
 - [Completion plan](docs/plans/2026-09-06-project-completion.md): full release roadmap.
 - [Current implementation status](docs/plans/2026-09-07-progress.md): implemented slices and outstanding release gates.
 

@@ -116,7 +116,7 @@ def run_all_scenarios():
 
     print("-" * 70)
     print("\n🎉 ALL REAL-WORLD TEST SCENARIOS COMPLETED SUCCESSFULLY!")
-    print("Reports stored in CyberShield_AI/reports/ directory.")
+    print("Reports stored in backend/reports/ directory.")
 
 
 if __name__ == "__main__":

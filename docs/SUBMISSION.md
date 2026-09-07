@@ -13,7 +13,7 @@ From the repository root, with Python 3.12 and Node.js 22:
 
 ```bash
 python3.12 -m venv .venv
-.venv/bin/python -m pip install --require-hashes --only-binary=:all: -r CyberShield_AI/requirements.txt
+.venv/bin/python -m pip install --require-hashes --only-binary=:all: -r backend/requirements.txt
 npm --prefix frontend ci
 .venv/bin/python run_local.py
 ```
