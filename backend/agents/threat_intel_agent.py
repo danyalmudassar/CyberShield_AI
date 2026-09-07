@@ -184,11 +184,14 @@ def _query_nvd_ai(tech_versions: List[str], use_mock: bool = False, strict_live:
     prompt = (
         f"Identify known CVE vulnerabilities for the following software versions:\n"
         f"{version_list}\n\n"
-        f"Return JSON format: [{{\"cve_id\": \"CVE-...\", \"severity\": \"Critical|High|Medium|Low\", \"cvss\": 8.5, \"description\": \"...\", \"affected_software\": \"...\"}}]"
+        'Return a JSON object: {"cve_matches": [{"cve_id": "CVE-...", '
+        '"severity": "Critical|High|Medium|Low", "cvss": 8.5, '
+        '"description": "...", "affected_software": "..."}]}. '
+        'Use an empty cve_matches list when no reliable matches are known.'
     )
     system_prompt = "You are a CVE database specialist. Return structured CVE entries in JSON format."
     
-    res = call_llm_json(prompt, system_prompt=system_prompt, use_mock=use_mock, timeout=10, strict_live=strict)
+    res = call_llm_json(prompt, system_prompt=system_prompt, use_mock=use_mock, timeout=30, strict_live=strict)
     prov = res.get("_provenance", "MOCK_FALLBACK" if use_mock else "LLM_REASONING") if isinstance(res, dict) else (
         "MOCK_FALLBACK" if use_mock else "LLM_REASONING"
     )
