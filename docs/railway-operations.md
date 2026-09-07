@@ -80,3 +80,13 @@ python -m unittest discover -s deploy/monitor -p 'test_*.py' -v
 Sources: [Railway backups](https://docs.railway.com/volumes/backups),
 [GitHub autodeploy and Wait for CI](https://docs.railway.com/deployments/github-autodeploys),
 [Railway service CLI](https://docs.railway.com/cli/service).
+
+## AI request limits
+
+DashScope analysis uses non-thinking mode for Qwen3 models, a 1,536-token output limit, and JSON-object output for structured analysis. SDK retries are disabled so provider failures do not consume repeated stage budgets. Reconnaissance and CVE AI calls have a 30-second request timeout. A failed DashScope request remains a DashScope failure; the application does not retry it against the unrelated universal-provider endpoint.
+
+Only select models available through the configured provider. A model name in the UI does not configure credentials or grant provider access.
+
+For Playwright tests using Snap Chromium, set an explicit `downloads_path` in a shared workspace directory. Snap and the host may see different `/tmp` filesystems; the default download directory can produce a misleading zero-byte saved file in the test harness.
+
+Provider reference: [Alibaba Cloud structured output](https://www.alibabacloud.com/help/en/model-studio/qwen-structured-output).

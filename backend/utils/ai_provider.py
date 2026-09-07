@@ -114,6 +114,7 @@ def call_llm(
     use_mock: bool = False,
     timeout: int = 5,
     strict_live: bool = False,
+    json_mode: bool = False,
 ) -> str:
     """Execute text generation against configured LLM provider or Gemini API."""
     strict = strict_live or os.getenv("STRICT_LIVE_MODE", "false").lower() in ("true", "1")
@@ -179,22 +180,33 @@ def call_llm(
         try:
             from openai import OpenAI
             ds_base_url = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
-            client = OpenAI(api_key=dashscope_key, base_url=ds_base_url)
+            client = OpenAI(api_key=dashscope_key, base_url=ds_base_url, max_retries=0)
+            options = {"max_tokens": 1536}
+            if llm_model.startswith("qwen3"):
+                options["extra_body"] = {"enable_thinking": False}
+            if json_mode:
+                options["response_format"] = {"type": "json_object"}
             response = client.chat.completions.create(
-                model=llm_model if "qwen" in llm_model else "qwen3.6-plus",
+                model=llm_model,
                 messages=[
                     {"role": "system", "content": system_prompt or default_system},
                     {"role": "user", "content": prompt},
                 ],
                 timeout=timeout,
+                **options,
             )
             content = response.choices[0].message.content
             if content:
-                _last_model.set(llm_model if "qwen" in llm_model else "qwen3.6-plus")
+                _last_model.set(llm_model)
                 logger.info("Alibaba Cloud Model Studio (%s) call succeeded via DashScope Intl", llm_model)
                 return content.strip()
+            raise RuntimeError("DashScope returned empty content")
         except Exception as err:
-            logger.warning("DashScope API call failed for model '%s' (%s). Trying universal routing...", llm_model, sanitize_text(str(err))[:120])
+            detail = sanitize_text(str(err))[:120]
+            if strict:
+                raise RuntimeError(f"STRICT_LIVE_MODE: DashScope call failed for model '{llm_model}' ({detail}).") from err
+            logger.warning("DashScope API call failed for model '%s' (%s).", llm_model, detail)
+            return ""
 
     # 3. Universal OpenAI-Compatible Routing (Ollama, Groq, DeepSeek, OpenRouter, OpenAI)
     if not llm_api_key:
@@ -245,7 +257,7 @@ def call_llm_json(
             raise RuntimeError("STRICT_LIVE_MODE: Cannot use mock mode when strict live mode is enabled.")
         return _load_mock_json()
 
-    raw_response = call_llm(prompt, system_prompt=system_prompt, use_mock=use_mock, timeout=timeout, strict_live=strict)
+    raw_response = call_llm(prompt, system_prompt=system_prompt, use_mock=use_mock, timeout=timeout, strict_live=strict, json_mode=True)
     if not raw_response:
         if strict:
             raise RuntimeError("STRICT_LIVE_MODE: LLM provider call returned empty response or failed.")
