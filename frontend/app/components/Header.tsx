@@ -10,6 +10,7 @@ import {
   Sun,
   Moon,
   LogOut,
+  LoaderCircle,
   ArrowUpRight,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -27,11 +28,13 @@ export default function Header({
   onSelectTab,
   authUser,
   onLogout,
+  isLoggingOut = false,
 }: {
   activeTab: TabId;
   onSelectTab: (tab: TabId) => void;
   authUser: { email: string; role: string };
   onLogout: () => void;
+  isLoggingOut?: boolean;
 }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -86,14 +89,6 @@ export default function Header({
             <strong>{authUser.email.split("@")[0]}</strong>
             <small>{authUser.role}</small>
           </div>
-          <button
-            className="icon-button"
-            onClick={onLogout}
-            aria-label="Sign out"
-            title="Sign out"
-          >
-            <LogOut size={17} />
-          </button>
         </div>
       </aside>
       <header className="workspace-header">
@@ -120,11 +115,14 @@ export default function Header({
             )}
           </button>
           <button
-            className="icon-button mobile-logout"
-            aria-label="Sign out"
+            type="button"
+            className="logout-button"
             onClick={onLogout}
+            disabled={isLoggingOut}
+            aria-busy={isLoggingOut}
           >
-            <LogOut size={18} />
+            {isLoggingOut ? <LoaderCircle size={16} className="animate-spin" aria-hidden="true" /> : <LogOut size={16} aria-hidden="true" />}
+            <span>{isLoggingOut ? "Logging out…" : "Log out"}</span>
           </button>
         </div>
       </header>

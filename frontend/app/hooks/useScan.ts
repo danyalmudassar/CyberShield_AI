@@ -34,6 +34,7 @@ export function useScan() {
   const [connectionVersion, setConnectionVersion] = useState(0);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authVersion, setAuthVersion] = useState(0);
   const generation = useRef(0);
   const owner = useRef<string | null>(null);
@@ -82,14 +83,21 @@ export function useScan() {
   }, [loginUser]);
 
   const logoutUser = async () => {
-    try { await request("/api/v1/auth/logout", { method: "POST" }); }
-    catch (failure) {
-      if (!(failure instanceof ApiError && failure.status === 401)) {
-        setError("Logout could not be confirmed. Please try again."); return;
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    setError(null);
+    try {
+      try { await request("/api/v1/auth/logout", { method: "POST" }); }
+      catch (failure) {
+        if (!(failure instanceof ApiError && failure.status === 401)) {
+          setError("Logout could not be confirmed. Please try again."); return;
+        }
       }
+      try { if (owner.current) localStorage.removeItem(`${LAST_SCAN}.${owner.current}`); } catch { /* Optional storage. */ }
+      resetScan(); owner.current = null; setAuthUser(null);
+    } finally {
+      setIsLoggingOut(false);
     }
-    try { if (owner.current) localStorage.removeItem(`${LAST_SCAN}.${owner.current}`); } catch { /* Optional storage. */ }
-    resetScan(); owner.current = null; setAuthUser(null);
   };
 
   const openScan = useCallback((id: string) => {
@@ -270,6 +278,6 @@ export function useScan() {
     isScanning: creating || (status !== null && !terminal(status)),
     startScan, reconnect, openScan, cancelScan,
     refreshHistory: () => setHistoryVersion((value) => value + 1),
-    authUser, authReady, loginUser, logoutUser,
+    authUser, authReady, loginUser, logoutUser, isLoggingOut,
   };
 }

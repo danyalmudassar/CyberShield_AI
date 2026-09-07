@@ -13,7 +13,7 @@ For frontend-only development, run `npm ci` and `npm run dev` here. Configure `C
 - `app/`: routes, components, hooks and backend proxy handlers.
 - `lib/`: shared API types and server utilities.
 - `public/`: static assets.
-- `tests/`: browser verification scripts.
+- `../backend/scripts/`: optional browser and session verification scripts.
 - `Dockerfile`: standalone production image.
 
 ## Verification and deployment
