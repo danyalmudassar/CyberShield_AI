@@ -3,6 +3,7 @@
 | Guide | Purpose |
 | --- | --- |
 | [Submission walkthrough](SUBMISSION.md) | Setup and a short fixture demo |
+| [Railway deployment](railway-deployment.md) | Current hosting plan: services, private API and persistent storage |
 | [Alibaba ECS deployment](alibaba-deployment.md) | HTTPS, persistence and cloud prerequisites |
 | [UI redesign](ui-redesign.md) | Desktop/mobile views and browser verification |
 | [Container release](container-release.md) | Verified local Docker setup |
