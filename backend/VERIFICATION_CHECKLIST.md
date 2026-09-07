@@ -7,8 +7,8 @@ Use this checklist during development, code reviews, and automated verification 
 ### 1. Coverage Verification (Mechanical Inspection)
 - When asserting complete coverage of fields or parameters (e.g., `provenance=`, `check_status=`, `strict_live=`), verify using explicit file inspection or exact grep counts:
   ```bash
-  grep -c "Finding(" CyberShield_AI/agents/pentest_agent.py
-  grep -c "provenance=" CyberShield_AI/agents/pentest_agent.py
+  grep -c "Finding(" backend/agents/pentest_agent.py
+  grep -c "provenance=" backend/agents/pentest_agent.py
   ```
 - Ensure every instantiated finding sets explicit `provenance` and `check_status`.
 
@@ -18,7 +18,7 @@ Use this checklist during development, code reviews, and automated verification 
 - Ensure that claimed unit test additions correspond 1:1 with `pytest` execution counts.
 - Run tests directly to confirm exact collection:
   ```bash
-  python3 -m pytest CyberShield_AI/tests/test_agent_audit_and_fallback.py
+  python3 -m pytest backend/tests/test_agent_audit_and_fallback.py
   ```
 
 ---

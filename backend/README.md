@@ -17,7 +17,7 @@ Use one process per database. Lifecycle startup recovers abandoned running jobs 
 | `CYBERSHIELD_DB` | SQLite path; defaults to `data/scans.sqlite3` |
 | `CYBERSHIELD_DEMO_ONLY` | `true` rejects live/rules-only submissions |
 | `CYBERSHIELD_ORIGINS` | Comma-separated trusted browser origins |
-| `CYBERSHIELD_API_TOKEN` | Optional single-team bearer credential; unset access is local-only |
+| `CYBERSHIELD_API_TOKEN` | Optional single-team bearer credential; session authentication remains required |
 | `CYBERSHIELD_ALLOW_PRIVATE` | Explicit opt-in to private/loopback lab target preflight |
 | `LLM_PROVIDER`, `LLM_BASE_URL`, `LLM_MODEL` | Default AI routing; requests may select a model independently |
 | `STRICT_LIVE_MODE` | Deployment strict-live policy; incompatible with demo |

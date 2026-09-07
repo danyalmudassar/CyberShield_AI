@@ -37,8 +37,8 @@ charges; configure the account's billing alerts and expiry handling.
 On the server, clone the release branch until it has been merged into master:
 
 ```bash
-git clone --branch release/2026-09-07-verified-local https://github.com/danyalmudassar/CyberShield_AI.git
-cd CyberShield_AI
+git clone --branch master https://github.com/danyalmudassar/CyberShield_AI.git CyberShield
+cd CyberShield
 python3 deploy/cloud/configure.py --domain security.example.com
 docker compose --env-file .cloud.env -p cybershield-cloud -f compose.cloud.yaml config -q
 docker compose --env-file .cloud.env -p cybershield-cloud -f compose.cloud.yaml up -d --build --wait

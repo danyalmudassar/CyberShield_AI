@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--ui-port', type=int, default=3000)
     args = parser.parse_args()
     root = Path(__file__).resolve().parent
-    backend, frontend = root / 'CyberShield_AI', root / 'frontend'
+    backend, frontend = root / 'backend', root / 'frontend'
     npm = shutil.which('npm')
     if not npm or not (frontend / 'node_modules' / 'next').exists():
         parser.error('Install Node.js dependencies with: cd frontend && npm ci')

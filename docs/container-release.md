@@ -63,13 +63,13 @@ automatically restarted by this Compose configuration.
 
 ## Dependency maintenance
 
-`CyberShield_AI/requirements.in` contains direct application/development pins.
+`backend/requirements.in` contains direct application/development pins.
 `requirements.txt` locks all 74 resolved packages with SHA-256 hashes.
 `requirements-runtime.in` omits legacy Gradio and test/browser dependencies;
 `requirements-runtime.txt` locks its 39 packages to versions in the full lock.
 The runtime image intentionally does not include the legacy Gradio entry point.
 
-Regenerate with uv 0.8.22 from `CyberShield_AI/`, then inspect changes and perform
+Regenerate with uv 0.8.22 from `backend/`, then inspect changes and perform
 fresh installation/tests. Do not hand-edit generated locks.
 
 ```bash
@@ -103,7 +103,7 @@ session, result, PDF bytes and exact event replay through the named volumes.
 Real Chromium acceptance passed all six grouped checks with zero page errors:
 anonymous launch prevention; configured login/HttpOnly session; demo/SSE without
 URL tokens; PDF button/download; refresh recovery; CSRF protection and revoking
-logout. Reproduction script: `CyberShield_AI/scripts/verify_session_browser.py`,
+logout. Reproduction script: `backend/scripts/verify_session_browser.py`,
 using `CYBERSHIELD_BROWSER_URL=http://127.0.0.1:3300` and an explicitly supplied
 `CYBERSHIELD_BROWSER_PASSWORD`. Temporary results/screenshots:
 `/tmp/cybershield-container-acceptance/`. Tests used project

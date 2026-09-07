@@ -1,7 +1,7 @@
 # Hosted release verification
 
 The public target is `danyalmudassar/CyberShield_AI`. The isolated release branch
-`release/2026-09-07-verified-local` combines the project as `CyberShield_AI/` and
+`release/2026-09-07-verified-local` combines the project as `backend/` and
 `frontend/`, with Compose, launcher, root docs and root GitHub Actions workflows.
 The existing remote default branch was not merged or rewritten. Original local
 backend/frontend repositories and their uncommitted development state were preserved.

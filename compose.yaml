@@ -2,7 +2,7 @@
 services:
   backend:
     build:
-      context: ./CyberShield_AI
+      context: ./backend
     init: true
     read_only: true
     cap_drop: [ALL]
