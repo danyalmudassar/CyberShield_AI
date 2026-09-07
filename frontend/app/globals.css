@@ -1055,7 +1055,8 @@ a {
 .form-error .text-button {
   margin-left: auto;
 }
-.demo-notice {
+.demo-notice,
+.coverage-notice {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1066,7 +1067,8 @@ a {
   border-radius: 8px;
   font-size: 11px;
 }
-.demo-notice > svg {
+.demo-notice > svg,
+.coverage-notice > svg {
   flex-shrink: 0;
 }
 .cs-terminal {
@@ -1881,3 +1883,11 @@ a {
 .auth-switch { margin:22px 0 0; text-align:center; font-size:12px; color:var(--subtle); }
 .auth-switch a { color:var(--brand); font-weight:600; margin-left:5px; }
 .password-guidance { color:var(--subtle); font-size:10px; line-height:1.7; margin-top:8px; }
+
+.coverage-notice {
+  align-items: flex-start;
+}
+.coverage-notice p {
+  margin: 4px 0 0;
+  line-height: 1.6;
+}

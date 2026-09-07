@@ -147,7 +147,7 @@ export function useScan() {
       setStatus(jobStatus);
       setScanState(state);
       if (state?.scan_progress) setScanProgress(state.scan_progress);
-      setError(jobStatus === "completed" ? null
+      setError(jobStatus === "completed" || jobStatus === "partial" ? null
         : typeof detail === "string" && detail ? detail
         : detail ? JSON.stringify(detail) : `Scan ${jobStatus.replaceAll("_", " ")}.`);
       source?.close();

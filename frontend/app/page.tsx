@@ -60,6 +60,14 @@ export default function Home() {
       ["VULNERABLE", "CONFIRMED"].includes(f.check_status) &&
       !/MOCK|FIXTURE|DEMO|LLM_REASONING/.test(f.provenance || ""),
   );
+  const stageLabels: Record<string, string> = {
+    pre_engagement: "Authorization", recon: "Reconnaissance",
+    threat_intel: "Threat intelligence", visual: "Web audit",
+    pentest: "Active assessment", pisf: "Compliance mapping", report: "Assessment report",
+  };
+  const incompleteStages = Object.entries(scanProgress)
+    .filter(([, outcome]) => ["partial", "failed", "error", "unavailable"].includes(outcome))
+    .map(([stage]) => stageLabels[stage] || stage.replaceAll("_", " "));
   const newAssessment = () => {
     setActiveTab("overview");
     requestAnimationFrame(() => {
@@ -152,6 +160,21 @@ export default function Home() {
             <button className="text-button" onClick={reconnect}>
               Reconnect
             </button>
+          </div>
+        )}
+        {status === "partial" && (
+          <div className="coverage-notice" role="status">
+            <Info size={18} />
+            <div>
+              <strong>Assessment finished with incomplete coverage.</strong>
+              <p>
+                Some checks could not be completed. Review the available evidence
+                and any generated report. Start a new assessment to retry the checks.
+              </p>
+              {incompleteStages.length > 0 && (
+                <p>Incomplete stages: {incompleteStages.join(", ")}.</p>
+              )}
+            </div>
           </div>
         )}
         {isDemo && (
