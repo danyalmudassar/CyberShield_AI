@@ -1,8 +1,20 @@
+# CyberShield AI — Root Git Ignore File
 config/.env
+*.env
+.env*
 __pycache__/
 *.pyc
 reports/*.pdf
 .pytest_cache/
 .venv/
 *.log
-cvelistV5-main/
+node_modules/
+.next/
+dist/
+build/
+
+.release-secrets/
+
+# Private cloud deployment configuration
+.cloud.env
+deploy/cloud/runtime/

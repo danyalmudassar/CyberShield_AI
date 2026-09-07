@@ -1,0 +1,54 @@
+# Local fixture-only release. No backend port or external scanner egress.
+services:
+  backend:
+    build:
+      context: ./CyberShield_AI
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 2
+    stop_grace_period: 20s
+    environment:
+      CYBERSHIELD_OPERATOR_PASSWORD_FILE: /run/secrets/operator_password
+      CYBERSHIELD_COOKIE_SECURE: 'false' # Local HTTP only; HTTPS deployments must use true.
+      CYBERSHIELD_ORIGINS: 'http://127.0.0.1:${CYBERSHIELD_UI_PORT:-3300},http://localhost:${CYBERSHIELD_UI_PORT:-3300}'
+      CYBERSHIELD_MAX_CONCURRENT_SCANS: '2'
+      CYBERSHIELD_MAX_PENDING_SCANS: '100'
+      CYBERSHIELD_DEMO_ONLY: 'true'
+    secrets: [operator_password]
+    volumes:
+      - scan_data:/app/data
+      - scan_reports:/app/reports
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    networks: [demo]
+  frontend:
+    build:
+      context: ./frontend
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    pids_limit: 64
+    mem_limit: 512m
+    cpus: 1
+    stop_grace_period: 10s
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:${CYBERSHIELD_UI_PORT:-3300}:3000'
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    networks: [demo, dashboard]
+secrets:
+  operator_password:
+    file: ${CYBERSHIELD_OPERATOR_PASSWORD_FILE:?Set the path to an operator password secret file}
+volumes:
+  scan_data:
+  scan_reports:
+networks:
+  dashboard:
+  demo:
+    internal: true

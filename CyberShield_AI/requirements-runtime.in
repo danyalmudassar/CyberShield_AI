@@ -1,0 +1,12 @@
+# Production API direct dependencies; optional Gradio/browser tooling stays in requirements.in.
+dnspython==2.6.1
+pyOpenSSL==23.2.0
+requests==2.34.2
+python-dotenv==1.0.1
+fpdf2==2.8.7
+python-whois==0.9.6
+openai==2.44.0
+fastapi==0.141.1
+uvicorn==0.22.0
+httpx==0.24.1
+beautifulsoup4==4.15.0

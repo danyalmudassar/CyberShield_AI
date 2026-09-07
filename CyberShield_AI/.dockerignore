@@ -1,0 +1,17 @@
+# Allow only API runtime inputs. Never send keys, databases or reports to Docker.
+**
+!Dockerfile
+!requirements-runtime.txt
+!models.py
+!server.py
+!agents/
+!agents/**
+!utils/
+!utils/**
+!services/
+!services/**
+!mocks/
+!mocks/**
+**/__pycache__/
+**/*.pyc
+**/.env*

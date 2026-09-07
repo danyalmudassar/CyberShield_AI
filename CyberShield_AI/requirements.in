@@ -1,0 +1,19 @@
+dnspython==2.6.1
+pyOpenSSL==23.2.0
+requests==2.34.2
+python-dotenv==1.0.1
+fpdf2==2.8.7
+gradio==6.26.0
+pytest==8.1.1
+python-whois==0.9.6
+playwright==1.62.0
+openai==2.44.0
+# Web server and API layer
+fastapi==0.141.1
+uvicorn==0.22.0
+# HTTP client (used by fastapi.testclient and internal utils)
+httpx==0.24.1
+# HTML parsing (used by crawler and tech fingerprinting)
+beautifulsoup4==4.15.0
+# Test helpers
+pytest-asyncio==0.23.6
