@@ -44,6 +44,7 @@ export default function Home() {
     authUser,
     authReady,
     logoutUser,
+    isLoggingOut,
   } = useScan();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   useEffect(() => {
@@ -84,6 +85,7 @@ export default function Home() {
         onSelectTab={setActiveTab}
         authUser={authUser}
         onLogout={() => void logoutUser()}
+        isLoggingOut={isLoggingOut}
       />
       <main id="workspace" className="workspace-main">
         <div className="page-heading">

@@ -486,8 +486,24 @@ a {
   gap: 7px;
   font-size: 11px;
 }
-.mobile-logout {
-  display: none;
+.logout-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.logout-button:hover:not(:disabled) {
+  background: #8fa5b51c;
+}
+.logout-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 .workspace-main {
   margin-left: 232px;
@@ -1404,9 +1420,6 @@ a {
   .workspace-header {
     height: 60px;
   }
-  .mobile-logout {
-    display: grid;
-  }
   .workspace-main {
     gap: 22px;
   }
@@ -1450,7 +1463,7 @@ a {
     gap: 6px;
   }
   .access-badge {
-    font-size: 9px;
+    display: none;
   }
   .page-heading h1 {
     font-size: 24px;
