@@ -1,73 +1,97 @@
 "use client";
-
-import React from "react";
-import { Download, FileText, ExternalLink } from "lucide-react";
-
-interface ReportDownloadProps {
+import {
+  Download,
+  FileText,
+  CheckCircle2,
+  Clock3,
+  ShieldCheck,
+  AlertCircle,
+} from "lucide-react";
+export default function ReportDownload({
+  execSummary,
+  pdfPath,
+  scanId,
+  reportStatus,
+}: {
   execSummary: string;
   pdfPath: string | null;
   scanId: string | null;
   reportStatus?: string;
-}
-
-export default function ReportDownload({ execSummary, pdfPath, scanId, reportStatus }: ReportDownloadProps) {
+}) {
   const ready = Boolean(pdfPath && scanId && reportStatus === "success");
-  const handleDownload = () => {
-    if (!ready || !scanId) return;
-    window.open(`/api/scans/${encodeURIComponent(scanId)}/report`, "_blank", "noopener,noreferrer");
+  const download = () => {
+    if (ready && scanId)
+      window.open(
+        `/api/scans/${encodeURIComponent(scanId)}/report`,
+        "_blank",
+        "noopener,noreferrer",
+      );
   };
-
   return (
-    <div className="cs-card p-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
-          <h3 className="text-[15px] font-semibold text-black dark:text-white">Executive Summary & Audit Report</h3>
-        </div>
-
-        {ready ? (
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-2 rounded-lg bg-black dark:bg-white px-4 py-2 text-xs font-semibold text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Download PDF
-          </button>
-        ) : (
-          <span className="text-xs text-neutral-400 dark:text-neutral-500 flex items-center gap-1.5">
-            <ExternalLink className="h-3 w-3" />
-            {reportStatus === "error" ? "Report generation failed" : "Report unavailable or pending"}
+    <div className="report-layout">
+      <article className="cs-card report-document">
+        <div className="report-document-header">
+          <span className="report-wordmark">
+            <ShieldCheck size={20} /> CYBERSHIELD AI
           </span>
-        )}
-      </div>
-
-      {/* Summary text block */}
-      <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-4 min-h-[120px]">
-        {execSummary ? (
-          <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
-            {execSummary}
-          </p>
-        ) : (
-          <p className="text-sm text-neutral-400 dark:text-neutral-500 italic">
-            Executive summary will be synthesized after the security audit completes.
-          </p>
-        )}
-      </div>
-
-      {ready && (
-        <div className="flex items-center justify-between rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Security assessment report ready</span>
-          </div>
-          <button
-            onClick={handleDownload}
-            className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-100 underline underline-offset-2 transition-colors"
-          >
-            Download →
-          </button>
+          <span>ASSESSMENT REPORT</span>
         </div>
-      )}
+        <div className="report-document-body">
+          <p className="eyebrow">ASSESSMENT INTELLIGENCE</p>
+          <h2>Executive summary</h2>
+          <p className="report-deck">
+            Evidence, observations and a clearer path forward.
+          </p>
+          <div className="report-rule" />
+          {execSummary ? (
+            <p className="report-summary">{execSummary}</p>
+          ) : (
+            <div className="report-empty">
+              <FileText size={32} />
+              <h3>Your report takes shape here</h3>
+              <p>
+                Complete an assessment to review its summary, findings and
+                recommendations.
+              </p>
+            </div>
+          )}
+          <div className="report-note">
+            <ShieldCheck size={17} />
+            <p>
+              Review finding provenance and assessment scope before acting.
+              Technical control mapping does not replace a manual compliance
+              review.
+            </p>
+          </div>
+        </div>
+      </article>
+      <aside className="cs-card report-export">
+        <span className="export-icon">
+          <FileText size={25} />
+        </span>
+        <h2>Your assessment, documented.</h2>
+        <p>Keep a PDF copy of the assessment for review and follow-up.</p>
+        <div className="export-status">
+          {ready ? (
+            <CheckCircle2 size={17} />
+          ) : reportStatus === "error" ? (
+            <AlertCircle size={17} />
+          ) : (
+            <Clock3 size={17} />
+          )}
+          <span>
+            {ready
+              ? "PDF ready to download"
+              : reportStatus === "error"
+                ? "Report generation failed"
+                : "Waiting for a completed report"}
+          </span>
+        </div>
+        <button className="primary-button" onClick={download} disabled={!ready}>
+          <Download size={16} /> Download PDF
+        </button>
+        <small>Available to the authorized scan owner.</small>
+      </aside>
     </div>
   );
 }

@@ -71,7 +71,7 @@ export default function FindingsTable({ findings }: FindingsTableProps) {
           </div>
 
           {/* Severity filter tabs */}
-          <div className="flex items-center gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 p-1 bg-neutral-50 dark:bg-neutral-900">
+          <div className="flex flex-wrap items-center gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 p-1 bg-neutral-50 dark:bg-neutral-900">
             {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map((sev) => {
               const count = sev === "ALL" ? findings.length : countBySev(sev);
               return (
@@ -175,7 +175,7 @@ export default function FindingsTable({ findings }: FindingsTableProps) {
                           <p className="text-xs text-neutral-700 dark:text-neutral-300">{f.remediation || "—"}</p>
                         </div>
                         {f.owasp_top10 && (
-                          <div className="mt-2 flex gap-2">
+                          <div className="mt-2 flex flex-wrap gap-2">
                             <span className="rounded border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-2 py-0.5 text-[10px] text-neutral-600 dark:text-neutral-400">
                               {f.owasp_top10}
                             </span>

@@ -1,7 +1,21 @@
 "use client";
-
-import React, { useState } from "react";
-import Header from "./components/Header";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Activity,
+  Layers,
+  FileCheck2,
+  ShieldAlert,
+  RefreshCw,
+  Plus,
+  Clock3,
+  LoaderCircle,
+  Info,
+  Globe2,
+} from "lucide-react";
+import Header, { navigation, type TabId } from "./components/Header";
 import ScanConfig from "./components/ScanConfig";
 import ScanTimeline from "./components/ScanTimeline";
 import ScoreGauge from "./components/ScoreGauge";
@@ -10,170 +24,288 @@ import VisualAudit from "./components/VisualAudit";
 import FindingsTable from "./components/FindingsTable";
 import ReportDownload from "./components/ReportDownload";
 import BenchmarkWidget from "./components/BenchmarkWidget";
-
 import { useScan } from "./hooks/useScan";
-
-type TabId = "overview" | "pisf" | "visual" | "findings" | "report";
-
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "overview",  label: "Overview",        icon: "📊" },
-  { id: "pisf",      label: "PISF 2026",       icon: "🇵🇰" },
-  { id: "visual",    label: "Visual Audit",    icon: "👁" },
-  { id: "findings",  label: "Vulnerabilities", icon: "🔴" },
-  { id: "report",    label: "Report",          icon: "📄" },
-];
-
 export default function Home() {
-  const { scanId, status, scanState, progressLog, scanProgress, error, history,
-    isScanning, startScan: handleStartScan, reconnect: handleRetry, openScan,
-    cancelScan, refreshHistory, authUser, authReady, loginUser, logoutUser } = useScan();
-  const hasConnectionError = Boolean(error);
+  const router = useRouter();
+  const {
+    scanId,
+    status,
+    scanState,
+    progressLog,
+    scanProgress,
+    error,
+    history,
+    isScanning,
+    startScan,
+    reconnect,
+    openScan,
+    cancelScan,
+    refreshHistory,
+    authUser,
+    authReady,
+    logoutUser,
+  } = useScan();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
-
-  const score      = scanState?.security_score || 0;
-  const findings   = scanState?.all_findings || [];
-  const pisfData   = scanState?.pisf;
-  const visualData = scanState?.visual;
-  const execSummary = scanState?.executive_summary || "";
-  const pdfPath    = scanState?.pdf_path || null;
-
-  const handleTabSelect = (tab: TabId) => {
-    setActiveTab(tab);
-    setTimeout(() => {
-      document.getElementById("tab-section")?.scrollIntoView({ behavior: "smooth" });
-    }, 50);
+  useEffect(() => {
+    if (authReady && !authUser) router.replace("/login");
+  }, [authReady, authUser, router]);
+  const findings = scanState?.all_findings || [];
+  const selectedJob = history.find((job) => job.id === scanId);
+  const isDemo =
+    (scanState?.execution_mode || selectedJob?.config.execution_mode) ===
+    "demo";
+  const confirmed = findings.filter(
+    (f) =>
+      ["VULNERABLE", "CONFIRMED"].includes(f.check_status) &&
+      !/MOCK|FIXTURE|DEMO|LLM_REASONING/.test(f.provenance || ""),
+  );
+  const newAssessment = () => {
+    setActiveTab("overview");
+    requestAnimationFrame(() => {
+      document
+        .getElementById("assessment-config")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("target-domain")?.focus({ preventScroll: true });
+    });
   };
-
+  if (!authReady || !authUser)
+    return (
+      <div className="session-loading" role="status">
+        <LoaderCircle className="animate-spin" size={24} />
+        <span>
+          {authReady ? "Opening sign in…" : "Opening your workspace…"}
+        </span>
+      </div>
+    );
   return (
-    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-200">
+    <div className="app-shell">
       <Header
         activeTab={activeTab}
-        onSelectTab={handleTabSelect}
+        onSelectTab={setActiveTab}
         authUser={authUser}
-        onLogin={loginUser}
-        onLogout={logoutUser}
+        onLogout={() => void logoutUser()}
       />
-
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
-        {/* Hero section — score + config */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2">
-            <ScanConfig onStartScan={handleStartScan} isScanning={isScanning} canScan={authReady && Boolean(authUser)} />
-          </div>
+      <main id="workspace" className="workspace-main">
+        <div className="page-heading">
           <div>
-            <ScoreGauge score={score} />
+            <p className="eyebrow">SECURITY OPERATIONS</p>
+            <h1>
+              {activeTab === "overview"
+                ? "Assessment overview"
+                : navigation.find((n) => n.id === activeTab)?.label}
+            </h1>
+            <p>Understand your exposure. Prioritize what matters.</p>
           </div>
+          <button
+            className="primary-button"
+            aria-label="New assessment"
+            onClick={newAssessment}
+          >
+            <Plus size={17} /> New assessment
+          </button>
         </div>
-
-        <section className="cs-card p-4 space-y-3" aria-label="Scan history">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold">Scan history</h2>
-            <button type="button" onClick={refreshHistory} className="text-xs underline">Refresh history</button>
-          </div>
-          {scanId && <p className="text-xs break-all">Current scan: {scanId} · {status ?? "Loading"}</p>}
-          {isScanning && scanId && <button type="button" onClick={() => void cancelScan()} disabled={status === "cancelling"} className="text-xs underline disabled:opacity-50">{status === "cancelling" ? "Cancellation requested" : "Cancel scan"}</button>}
-          {error && <div role="alert" className="text-xs text-red-600">{error} <button type="button" onClick={handleRetry} className="underline">Reconnect</button></div>}
-          <div className="flex flex-wrap gap-2">
-            {history.map((job) => <button type="button" key={job.id} onClick={() => openScan(job.id)} disabled={isScanning && job.id !== scanId} className="rounded border px-3 py-2 text-xs disabled:opacity-50">{job.config.domain} · {job.config.execution_mode} · {job.status}</button>)}
-            {history.length === 0 && <p className="text-xs text-neutral-500">No saved scans yet.</p>}
-          </div>
-        </section>
-
-        {/* Timeline */}
-        <ScanTimeline
-          progressLog={progressLog}
-          scanProgress={scanProgress}
-          isScanning={isScanning}
-          hasError={hasConnectionError}
-          onRetry={handleRetry}
-        />
-
-        {/* Verified Benchmarks Widget */}
-        <BenchmarkWidget />
-
-
-        {/* Fallback Banner if mock or fallback triggered */}
-        {(scanState?.fallback_triggered || Object.values(scanProgress).some((s) => s === "mock_fallback" || s === "mock")) && (
-          <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 flex items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-200">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-amber-500" />
-              <span className="font-semibold uppercase tracking-wider text-[10px]">Mock / Fallback Active</span>
-              <span className="text-amber-700 dark:text-amber-300">
-                · This assessment contains demo data or a degraded execution stage.
-              </span>
+        <div className="metrics-strip">
+          {[
+            {
+              label: "Saved assessments",
+              value: history.length,
+              detail: "In your workspace",
+              icon: Layers,
+            },
+            {
+              label: "Confirmed findings",
+              value: scanState ? confirmed.length : "—",
+              detail: isDemo ? "Demo findings excluded" : "Selected assessment",
+              icon: ShieldAlert,
+            },
+            {
+              label: "Assessment status",
+              value: status?.replaceAll("_", " ") || "Ready",
+              detail: isScanning
+                ? "Assessment in progress"
+                : "Select or start a scan",
+              icon: Activity,
+            },
+            {
+              label: "Report",
+              value: scanState?.pdf_path ? "Available" : "Pending",
+              detail: "Evidence & recommendations",
+              icon: FileCheck2,
+            },
+          ].map(({ label, value, detail, icon: Icon }) => (
+            <div className="metric" key={label}>
+              <div className="metric-top">
+                <span>{label}</span>
+                <Icon size={17} />
+              </div>
+              <strong>{value}</strong>
+              <small>{detail}</small>
             </div>
-            <span className="font-mono text-[10px] bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded text-amber-900 dark:text-amber-100">
-              CHECK FINDING PROVENANCE
+          ))}
+        </div>
+        {error && (
+          <div className="form-error" role="alert">
+            <Info size={18} />
+            <span>{error}</span>
+            <button className="text-button" onClick={reconnect}>
+              Reconnect
+            </button>
+          </div>
+        )}
+        {isDemo && (
+          <div className="demo-notice">
+            <Info size={17} />
+            <span>
+              <strong>Demo assessment.</strong> Results use offline fixtures; no
+              target requests are made.
             </span>
           </div>
         )}
-
-        {/* Tabs — cal.com underline style */}
-
-        <div id="tab-section" className="space-y-5 scroll-mt-20">
-          <div className="border-b border-neutral-200 dark:border-neutral-800">
-            <nav className="flex gap-0 -mb-px overflow-x-auto">
-              {TABS.map((tab) => {
-                const isActive = activeTab === tab.id;
-                const count = tab.id === "findings" ? findings.length : null;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
-                      isActive
-                        ? "border-black dark:border-white text-black dark:text-white"
-                        : "border-transparent text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-100 hover:border-neutral-300 dark:hover:border-neutral-700"
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                    {count !== null && count > 0 && (
-                      <span
-                        className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                          isActive
-                            ? "bg-black text-white dark:bg-white dark:text-black"
-                            : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
-                        }`}
-                      >
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          {/* Tab content */}
-          <div className="min-h-[300px]">
-            {activeTab === "overview" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <FindingsTable findings={findings} />
-                <VisualAudit visualData={visualData} />
+        {activeTab === "overview" && (
+          <>
+            <div className="assessment-grid">
+              <div id="assessment-config">
+                <ScanConfig
+                  onStartScan={startScan}
+                  isScanning={isScanning}
+                  canScan={true}
+                />
               </div>
-            )}
-            {activeTab === "pisf"     && <PisfGrid pisfData={pisfData} />}
-            {activeTab === "visual"   && <VisualAudit visualData={visualData} />}
-            {activeTab === "findings" && <FindingsTable findings={findings} />}
-            {activeTab === "report"   && <ReportDownload execSummary={execSummary} pdfPath={pdfPath} scanId={scanId} reportStatus={scanState?.report_status} />}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer className="border-t border-neutral-200 dark:border-neutral-800 pt-6 pb-2">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400 dark:text-neutral-500">
-            <p>
-              CyberShield AI — Local development preview · Technical security assessment
-            </p>
-            <div className="flex items-center gap-4">
-              <span>Manual compliance review required</span>
-              <span>·</span>
-              <span>Coverage depends on scan scope</span>
-              <span>·</span>
-              <span>OWASP Top 10 Mapped</span>
+              <div className="assessment-side">
+                <ScoreGauge
+                  score={scanState?.security_score ?? 0}
+                  available={typeof scanState?.security_score === "number"}
+                  isDemo={isDemo}
+                />
+                <div className="scope-note">
+                  <Globe2 size={19} />
+                  <div>
+                    <strong>Scope shapes your results</strong>
+                    <p>
+                      Review assessed coverage alongside every score. Unassessed
+                      checks are not proof of security.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+            <ScanTimeline
+              progressLog={progressLog}
+              scanProgress={scanProgress}
+              isScanning={isScanning}
+              hasError={Boolean(error)}
+              onRetry={reconnect}
+            />
+            <section className="cs-card history-section">
+              <div className="section-heading">
+                <div>
+                  <h2>Recent assessments</h2>
+                  <p>Pick up where you left off.</p>
+                </div>
+                <button className="secondary-button" onClick={refreshHistory}>
+                  <RefreshCw size={14} /> Refresh
+                </button>
+              </div>
+              {isScanning && scanId && (
+                <div className="active-scan-row">
+                  <LoaderCircle size={16} className="animate-spin" />
+                  <span>Assessment in progress</span>
+                  <button
+                    className="text-button"
+                    onClick={() => void cancelScan()}
+                    disabled={status === "cancelling"}
+                  >
+                    {status === "cancelling"
+                      ? "Cancelling…"
+                      : "Cancel assessment"}
+                  </button>
+                </div>
+              )}
+              {history.length ? (
+                <div className="history-list">
+                  {history.map((job) => (
+                    <button
+                      key={job.id}
+                      onClick={() => openScan(job.id)}
+                      disabled={isScanning && job.id !== scanId}
+                      className={`history-row ${job.id === scanId ? "current" : ""}`}
+                    >
+                      <span className="history-icon">
+                        <Globe2 size={18} />
+                      </span>
+                      <span className="history-target">
+                        <strong>{job.config.domain}</strong>
+                        <small>
+                          {job.config.execution_mode.replaceAll("_", " ")} ·{" "}
+                          {job.config.scope_type.replaceAll("_", " ")}
+                        </small>
+                      </span>
+                      <span className={`status-pill status-${job.status}`}>
+                        {job.status.replaceAll("_", " ")}
+                      </span>
+                      <ArrowUpRight size={16} />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="history-empty">
+                  <Clock3 size={25} />
+                  <div>
+                    <strong>Your assessment history starts here</strong>
+                    <p>
+                      Launch your first assessment to save progress and review
+                      results.
+                    </p>
+                  </div>
+                  <ArrowRight size={18} />
+                </div>
+              )}
+            </section>
+            <div className="section-heading">
+              <div>
+                <h2>Assessment results</h2>
+                <p>
+                  {scanState
+                    ? "Review evidence from your selected scan."
+                    : "Findings and web checks will appear after an assessment."}
+                </p>
+              </div>
+              <button
+                className="text-button"
+                onClick={() => setActiveTab("findings")}
+              >
+                View all findings <ArrowRight size={15} />
+              </button>
+            </div>
+            <div className="results-grid">
+              <FindingsTable findings={findings} />
+              <VisualAudit visualData={scanState?.visual} />
+            </div>
+            <details className="historical-details">
+              <summary>
+                Historical benchmark records{" "}
+                <span>Reference only · not current scan results</span>
+              </summary>
+              <BenchmarkWidget />
+            </details>
+          </>
+        )}
+        {activeTab === "findings" && <FindingsTable findings={findings} />}
+        {activeTab === "visual" && (
+          <VisualAudit visualData={scanState?.visual} />
+        )}
+        {activeTab === "pisf" && <PisfGrid pisfData={scanState?.pisf} />}
+        {activeTab === "report" && (
+          <ReportDownload
+            execSummary={scanState?.executive_summary || ""}
+            pdfPath={scanState?.pdf_path || null}
+            scanId={scanId}
+            reportStatus={scanState?.report_status}
+          />
+        )}
+        <footer className="workspace-footer">
+          <span>CyberShield AI · Security assessment workspace</span>
+          <span>Technical mapping. Manual compliance review required.</span>
         </footer>
       </main>
     </div>

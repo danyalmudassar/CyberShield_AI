@@ -2,6 +2,13 @@
 
 Local web-security assessment dashboard with deterministic probes, optional AI analysis, a project-defined technical control matrix, and PDF reports.
 
+## Workspace preview
+
+Dedicated sign-in, scoped assessments, persistent history and PDF reports.
+See the [submission walkthrough](docs/SUBMISSION.md) and [UI verification](docs/ui-redesign.md).
+
+![CyberShield workspace](docs/ui-preview/dashboard-desktop.png)
+
 ## Start the local demo
 
 On Linux, from this directory use Python 3.12 and Node.js 20.9 or later:

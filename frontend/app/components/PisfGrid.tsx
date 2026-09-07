@@ -75,9 +75,9 @@ export default function PisfGrid({ pisfData }: PisfGridProps) {
     <div className="cs-card overflow-hidden">
       {/* Header */}
       <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h3 className="text-[15px] font-semibold text-black dark:text-white">🇵🇰 PISF Project Technical Mapping</h3>
+            <h3 className="text-[15px] font-semibold text-black dark:text-white">PISF technical control mapping</h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
               {passCt} passing technical checks · {assessable}/{total} controls assessable
             </p>

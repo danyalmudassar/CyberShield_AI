@@ -26,10 +26,10 @@ The [container guide](container-release.md) provides the verified Docker alterna
 
 ## Three-minute walkthrough
 
-1. Sign in, show the authorization checkbox and explicit execution modes.
-2. Select **Demo**, confirm authorization and launch one scan.
-3. Show streamed progress, evidence/status distinctions and the completed report.
-4. Download the PDF; refresh to show the same scan remains in history.
+1. Open the dedicated login page, sign in, then show the workspace and authorization checkbox.
+2. Keep **Demo** selected, confirm authorization and select **Start demo assessment**.
+3. Show assessment activity and evidence/status distinctions, then open **Reports**.
+4. Select **Download PDF**; return to **Overview** and reopen the scan from **Recent assessments**.
 5. Log out and explain that report/history access requires authentication.
 
 Label the demonstration as fixture-only. `rules_only` is network-active and skips
@@ -58,3 +58,5 @@ are the established release boundary.
 Do not upload `.env` files, `.release-secrets`, runtime databases, generated private
 reports, virtual environments or node_modules. Submit the repository/source archive
 and the verification links, not local credentials.
+
+The redesigned login/dashboard screenshots and browser verification are in [UI redesign](ui-redesign.md).
