@@ -1,3 +1,9 @@
+> **AI Hackathon Pakistan 2026 Submission**
+>
+> **Project ID:** P01869 | **Applicant:** Danyal Mudassar
+>
+> Originally listed as Kinetix AI Coach. A title/domain change request to CyberShield AI was submitted on 4 September 2026 under the ticket subject "Project Title & Domain Change Request to CyberShield AI - P01869".
+
 # CyberShield AI
 
 [![Backend verification](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/backend.yml/badge.svg?branch=master)](https://github.com/danyalmudassar/CyberShield_AI/actions/workflows/backend.yml)
