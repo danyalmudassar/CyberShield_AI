@@ -307,7 +307,7 @@ class ReportData:
     detailed_findings: list[Finding] = field(default_factory=list)
     pisf_matrix: list[PisfControl] = field(default_factory=list)
     remediation_roadmap: dict = field(default_factory=dict)
-    security_posture_score: float = 0.0        # 0-100
+    security_posture_score: Optional[float] = None  # 0-100; None when evidence is unavailable
     pdf_path: Optional[str] = None
     ai_model_used: str = "OFFLINE_DETERMINISTIC"
     fallback_triggered: bool = False

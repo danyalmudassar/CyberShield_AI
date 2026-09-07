@@ -27,7 +27,7 @@ export interface ScanState {
   execution_mode?: ExecutionMode;
   strict_live?: boolean;
   domain?: string;
-  security_score?: number;
+  security_score?: number | null;
   all_findings?: Finding[];
   pisf?: Record<string, unknown>;
   visual?: Record<string, unknown>;

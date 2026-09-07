@@ -529,15 +529,16 @@ def _run_full_scan(
         if state.report is None:
             raise RuntimeError("Report stage returned no report")
         state.scan_progress["report"] = _stage_status(report_result)
-        _update("report", f"Report generated — score: {report_result.get('security_score', 'N/A')}" if isinstance(report_result, dict) else "Report failed")
+        score = report_result.get("security_score")
+        _update("report", f"Report generated — score: {score if score is not None else 'Unavailable'}")
     except Exception as e:
         _handle_stage_error("report", e)
         state.scan_progress["report"] = "failed"
 
     # ── Done ───────────────────────────────────────────────────────────────
     if state.scan_progress.get("status") != "FAILED":
-        score = state.report.security_posture_score if state.report else "N/A"
-        _update("complete", f"Scan complete. Security score: {score}")
+        score = state.report.security_posture_score if state.report else None
+        _update("complete", f"Scan complete. Security score: {score if score is not None else 'Unavailable'}")
         state.scan_progress["status"] = "PARTIAL" if any(v in ("failed", "partial") for v in state.scan_progress.values()) else "COMPLETED"
     return state
 
