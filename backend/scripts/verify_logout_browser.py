@@ -17,6 +17,16 @@ OUTPUT.mkdir(parents=True, exist_ok=True)
 with sync_playwright() as p:
     browser=p.chromium.launch(executable_path=os.getenv('CYBERSHIELD_CHROMIUM', '/snap/bin/chromium'),headless=True,args=['--no-sandbox'])
     checks=[]
+    for path in ('/login', '/signup'):
+        cold_context = browser.new_context(java_script_enabled=False)
+        cold_page = cold_context.new_page()
+        cold_page.goto(BASE + path, wait_until='domcontentloaded')
+        form = cold_page.locator('form.login-form')
+        assert form.get_attribute('method') == 'post'
+        expect(form.locator('button[type=submit]')).to_be_disabled()
+        expect(form.locator('input[name=password]')).to_be_disabled()
+        cold_context.close()
+    checks.append({'unhydrated_login_and_signup': 'disabled; POST fallback'})
     for width,height in [(1440,1000),(390,844)]:
         context=browser.new_context(viewport={'width':width,'height':height})
         page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))

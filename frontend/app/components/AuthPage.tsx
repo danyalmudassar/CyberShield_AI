@@ -21,8 +21,10 @@ export default function AuthPage({ signup = false }: { signup?: boolean }) {
   const [confirmation, setConfirmation] = useState("");
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
+    setHydrated(true);
     const controller = new AbortController();
     fetch("/api/v1/auth/me", {
       credentials: "same-origin",
@@ -37,7 +39,7 @@ export default function AuthPage({ signup = false }: { signup?: boolean }) {
   }, [router]);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (loading) return;
+    if (!hydrated || loading) return;
     if (signup && password !== confirmation) { setError("Passwords do not match."); return; }
     setLoading(true);
     setError("");
@@ -130,7 +132,8 @@ export default function AuthPage({ signup = false }: { signup?: boolean }) {
           <p className="eyebrow">{signup ? "GET STARTED" : "WELCOME BACK"}</p>
           <h2>{signup ? "Create your account" : "Sign in to CyberShield"}</h2>
           <p className="login-description">{signup ? "Your own workspace for assessments, evidence and reports. Create an operator account to begin." : "Your next assessment starts here. Use your workspace credentials to continue."}</p>
-          <form onSubmit={submit} className="login-form" aria-busy={loading}>
+          <form method="post" onSubmit={submit} className="login-form" aria-busy={!hydrated || loading}>
+            <noscript><p className="form-error">Enable JavaScript in your browser to use this form.</p></noscript>
             {error && (
               <div className="form-error" role="alert">
                 <AlertCircle size={18} />
@@ -146,7 +149,7 @@ export default function AuthPage({ signup = false }: { signup?: boolean }) {
                 autoComplete="username"
                 placeholder="you@organization.com"
                 required
-                disabled={loading}
+                disabled={!hydrated || loading}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -163,7 +166,7 @@ export default function AuthPage({ signup = false }: { signup?: boolean }) {
                     maxLength={256}
                   placeholder="Enter your password"
                   required
-                  disabled={loading}
+                  disabled={!hydrated || loading}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -177,13 +180,15 @@ export default function AuthPage({ signup = false }: { signup?: boolean }) {
                 </button>
               </div>
             </div>
-            {signup && <div><label htmlFor="confirm-password">Confirm password</label><input id="confirm-password" name="confirm-password" type={visible ? "text" : "password"} autoComplete="new-password" minLength={12} maxLength={256} required disabled={loading} value={confirmation} onChange={e => setConfirmation(e.target.value)} placeholder="Re-enter your password"/><p className="password-guidance">Use at least 12 characters. A unique passphrase works well.</p></div>}
+            {signup && <div><label htmlFor="confirm-password">Confirm password</label><input id="confirm-password" name="confirm-password" type={visible ? "text" : "password"} autoComplete="new-password" minLength={12} maxLength={256} required disabled={!hydrated || loading} value={confirmation} onChange={e => setConfirmation(e.target.value)} placeholder="Re-enter your password"/><p className="password-guidance">Use at least 12 characters. A unique passphrase works well.</p></div>}
             <button
               type="submit"
               className="primary-button login-submit"
-              disabled={loading}
+              disabled={!hydrated || loading}
             >
-              {loading ? (
+              {!hydrated ? (
+                <><LoaderCircle className="animate-spin" size={18} /> Preparing form…</>
+              ) : loading ? (
                 <>
                   <LoaderCircle className="animate-spin" size={18} /> Signing
                   in…
