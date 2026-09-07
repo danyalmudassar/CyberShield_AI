@@ -1,0 +1,19 @@
+# Use alongside compose.yaml, with a separate Compose project and dashboard port.
+# Restores never overwrite the original scan_data/scan_reports volumes.
+services:
+  backend:
+    volumes:
+      - type: volume
+        source: recovery
+        target: /app/data
+        volume:
+          subpath: ${CYBERSHIELD_RESTORE_DIRECTORY:?Set the restored directory name}/data
+      - type: volume
+        source: recovery
+        target: /app/reports
+        volume:
+          subpath: ${CYBERSHIELD_RESTORE_DIRECTORY:?Set the restored directory name}/reports
+volumes:
+  recovery:
+    external: true
+    name: ${CYBERSHIELD_BACKUP_VOLUME:?Set the volume containing the verified restore}

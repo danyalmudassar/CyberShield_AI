@@ -1,0 +1,11 @@
+config/.env
+__pycache__/
+*.pyc
+reports/*.pdf
+.pytest_cache/
+.venv/
+*.log
+cvelistV5-main/
+
+data/
+.venv_verify/
