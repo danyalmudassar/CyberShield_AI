@@ -219,7 +219,7 @@ def _serialize_state(state: ScanState) -> dict:
         "all_findings": [_serialize_finding(f) for f in state.all_findings],
         "visual": _serialize_visual(state.visual),
         "pisf": _serialize_pisf(state.pisf),
-        "security_score": state.report.security_posture_score if state.report else 0.0,
+        "security_score": state.report.security_posture_score if state.report else None,
         "executive_summary": state.report.executive_summary if state.report else "",
         "pdf_path": os.path.basename(state.report.pdf_path) if state.report and state.report.pdf_path else None,
         "report_status": state.report.status if state.report else "unavailable",

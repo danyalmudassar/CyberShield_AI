@@ -85,3 +85,44 @@ def test_simultaneous_same_target_pdfs_are_distinct(tmp_path, monkeypatch):
         from pathlib import Path
         assert Path(path).read_bytes().startswith(b"%PDF")
         assert Path(path).parent == tmp_path
+
+
+@pytest.mark.parametrize('pisf', [None, PisfResult(), PisfResult(status='error')])
+def test_missing_control_evidence_has_no_security_score(pisf):
+    assert report_agent._calculate_security_score([], pisf) is None
+
+
+def test_unassessable_controls_have_no_security_score():
+    from models import PisfControl
+    pisf = PisfResult(controls=[PisfControl(status='NOT_ASSESSABLE')])
+    assert report_agent._calculate_security_score([], pisf) is None
+
+
+def test_measured_zero_is_not_unavailable():
+    from models import PisfControl
+    pisf = PisfResult(controls=[PisfControl(status='FAIL')], overall_score=0)
+    findings = [Finding(severity='Critical') for _ in range(8)]
+    assert report_agent._calculate_security_score(findings, pisf) == 0
+
+
+def test_api_missing_report_has_null_score():
+    from models import ScanState
+    from server import _serialize_state
+    assert _serialize_state(ScanState())['security_score'] is None
+
+
+def test_unavailable_score_is_explicit_in_pdf(tmp_path, monkeypatch):
+    monkeypatch.setattr(report_agent, 'REPORTS_DIR', str(tmp_path))
+    from fpdf import FPDF
+    original = FPDF.cell
+    labels = []
+    def cell(self, *args, **kwargs):
+        labels.extend(str(arg) for arg in args)
+        return original(self, *args, **kwargs)
+    monkeypatch.setattr(FPDF, 'cell', cell)
+    result = report_agent.generate_report({'domain': 'example.invalid'})
+    assert result['status'] == 'success'
+    assert result['security_score'] is None
+    assert any('Security Score: Unavailable' in text for text in labels)
+    from pathlib import Path
+    assert Path(result['pdf_path']).read_bytes().startswith(b'%PDF')
